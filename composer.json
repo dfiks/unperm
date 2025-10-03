@@ -24,7 +24,10 @@
   "autoload": {
     "psr-4": {
       "DFiks\\UnPerm\\": "src/"
-    }
+    },
+    "files": [
+      "src/helpers.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {

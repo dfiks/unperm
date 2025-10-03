@@ -27,6 +27,15 @@ class UnPermServiceProvider extends ServiceProvider
         $this->app->singleton('unperm', function ($app) {
             return new PermissionChecker();
         });
+
+        $this->app->singleton('unperm.gate', function ($app) {
+            return new \DFiks\UnPerm\Support\PermissionGate();
+        });
+
+        // Загружаем helpers
+        if (file_exists(__DIR__ . '/helpers.php')) {
+            require_once __DIR__ . '/helpers.php';
+        }
     }
 
     public function boot(): void
