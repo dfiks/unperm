@@ -56,20 +56,21 @@ class PermissionGate
         $user = $user ?? Auth::user();
 
         if (!$user) {
-            return false;
+            return $fluent ? PermissionResult::make(false, $ability, $arguments) : false;
         }
 
         // Проверяем before callbacks
         foreach ($this->beforeCallbacks as $callback) {
             $result = $callback($user, $ability, $arguments);
             if ($result !== null) {
-                return (bool) $result;
+                $boolResult = (bool) $result;
+                return $fluent ? PermissionResult::make($boolResult, $ability, $arguments) : $boolResult;
             }
         }
 
         // Проверяем само правило
         if (!isset($this->rules[$ability])) {
-            return false;
+            return $fluent ? PermissionResult::make(false, $ability, $arguments) : false;
         }
 
         $rule = $this->rules[$ability];
