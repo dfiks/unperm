@@ -31,7 +31,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "UnPermServiceProvider"
+        "DFiks\\UnPerm\\UnPermServiceProvider"
       ]
     }
   },
