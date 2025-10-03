@@ -36,11 +36,12 @@ class UnPermServiceProvider extends ServiceProvider
 
             $this->commands([
                 SyncActionsCommand::class,
-                \DFiks\UnPerm\Console\SyncRolesCommand::class,
-                \DFiks\UnPerm\Console\SyncGroupsCommand::class,
-                \DFiks\UnPerm\Console\SyncPermissionsCommand::class,
+                Console\SyncRolesCommand::class,
+                Console\SyncGroupsCommand::class,
+                Console\SyncPermissionsCommand::class,
                 RebuildBitmaskCommand::class,
-                \DFiks\UnPerm\Console\GenerateIdeHelperCommand::class,
+                Console\GenerateIdeHelperCommand::class,
+                Console\AnalyzeBitmaskCommand::class,
             ]);
         }
 

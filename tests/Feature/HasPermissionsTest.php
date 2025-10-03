@@ -15,7 +15,7 @@ class HasPermissionsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::create([
             'name' => 'Test User',
             'email' => 'test@test.com',
@@ -72,7 +72,7 @@ class HasPermissionsTest extends TestCase
 
         $this->user->syncActions(['edit', 'delete']);
         $this->user = $this->user->fresh();
-        
+
         $this->assertFalse($this->user->hasAction('view'));
         $this->assertTrue($this->user->hasAction('edit'));
         $this->assertTrue($this->user->hasAction('delete'));
@@ -154,4 +154,3 @@ class HasPermissionsTest extends TestCase
         $this->assertCount(1, $this->user->fresh()->actions);
     }
 }
-

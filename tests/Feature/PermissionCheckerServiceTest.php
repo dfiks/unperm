@@ -17,7 +17,7 @@ class PermissionCheckerServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->checker = app(PermissionChecker::class);
     }
 
@@ -61,7 +61,7 @@ class PermissionCheckerServiceTest extends TestCase
         $user = User::create(['name' => 'Test', 'email' => 'test@test.com']);
         $action = Action::create(['name' => 'Edit', 'slug' => 'edit', 'bitmask' => '2']);
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '0']);
-        
+
         $role->actions()->attach($action->id);
         $user->assignRole($role);
         $user->load('roles');
@@ -74,7 +74,7 @@ class PermissionCheckerServiceTest extends TestCase
         $user = User::create(['name' => 'Test', 'email' => 'test@test.com']);
         $action = Action::create(['name' => 'Delete', 'slug' => 'delete', 'bitmask' => '4']);
         $group = Group::create(['name' => 'Team', 'slug' => 'team', 'bitmask' => '0']);
-        
+
         $group->actions()->attach($action->id);
         $user->assignGroup($group);
         $user->load('groups');
@@ -102,4 +102,3 @@ class PermissionCheckerServiceTest extends TestCase
         $this->assertTrue(UnPerm::modelHasBit($user, 0));
     }
 }
-

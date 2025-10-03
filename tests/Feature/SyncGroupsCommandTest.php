@@ -2,9 +2,7 @@
 
 namespace DFiks\UnPerm\Tests\Feature;
 
-use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Models\Group;
-use DFiks\UnPerm\Models\Role;
 use DFiks\UnPerm\Tests\TestCase;
 
 class SyncGroupsCommandTest extends TestCase
@@ -12,7 +10,7 @@ class SyncGroupsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config([
             'unperm.actions' => [
                 'users' => ['view' => 'View'],
@@ -42,7 +40,7 @@ class SyncGroupsCommandTest extends TestCase
                 ],
             ],
         ]);
-        
+
         $this->artisan('unperm:sync-actions');
         $this->artisan('unperm:sync-roles');
     }
@@ -54,7 +52,7 @@ class SyncGroupsCommandTest extends TestCase
 
         $this->assertDatabaseHas('groups', ['slug' => 'content-team', 'name' => 'Content Team']);
         $this->assertDatabaseHas('groups', ['slug' => 'read-only', 'name' => 'Read Only']);
-        
+
         $this->assertEquals(2, Group::count());
     }
 
@@ -102,4 +100,3 @@ class SyncGroupsCommandTest extends TestCase
         $this->assertEquals(2, Group::count());
     }
 }
-

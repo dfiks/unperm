@@ -115,22 +115,28 @@ $user->syncActions(['users.view', 'users.edit']);
 
 ## IDE Helper
 
-Генерируйте файл для автодополнения:
+Генерируйте файл для автодополнения строк в параметрах:
 
 ```bash
-php artisan unperm:generate-ide-helper
+php artisan unperm:generate-ide-helper --meta
 ```
 
-Это создаст файл `_ide_helper_permissions.php` с:
-- Методами для всех actions/roles/groups
-- Константами для строгой типизации
+Это создаст два файла:
+
+1. **`_ide_helper_permissions.php`** - с методами и константами
+2. **`.phpstorm.meta.php`** - для автодополнения строк в PhpStorm/IDE
+
+После генерации **перезапустите PhpStorm** и вы получите автодополнение:
 
 ```php
-// Теперь в IDE будет автодополнение:
-$user->hasAction_users_view();  // автогенерированный метод
+// Автодополнение в строковых параметрах!
+$user->hasAction('');      // IDE покажет: users.view, posts.create, ...
+$user->assignRole('');     // IDE покажет: admin, editor, ...
+$user->hasGroup('');       // IDE покажет: content-team, ...
 
 // Или используйте константы:
 $user->hasAction(UnPermActions::USERS_VIEW);
+$user->hasRole(UnPermRoles::ADMIN);
 ```
 
 ## Команды
@@ -147,7 +153,8 @@ php artisan unperm:sync-groups             # Только groups
 php artisan unperm:rebuild-bitmask         # Пересчитать все маски
 
 # IDE Helper
-php artisan unperm:generate-ide-helper    # Генерация помощника
+php artisan unperm:generate-ide-helper           # Генерация _ide_helper_permissions.php
+php artisan unperm:generate-ide-helper --meta    # + .phpstorm.meta.php для автодополнения строк
 ```
 
 ## Wildcard паттерны
@@ -173,6 +180,52 @@ SELECT * FROM model_actions WHERE model_id = ? AND action_id IN (...)
 ```
 
 Это означает **мгновенные проверки** без запросов к БД!
+
+### Лимиты и Оптимизация
+
+Пакет использует тип `TEXT` для хранения битовых масок, что позволяет:
+
+- **До 65,535 символов** в поле `bitmask`
+- **До ~20,000 permissions** практически (2^20000 ≈ 6000 цифр)
+- **До ~200,000 permissions** теоретически (лимит TEXT поля)
+
+#### Оптимизация для разреженных данных
+
+Если у пользователей **мало назначенных permissions** из большого набора (например, 10 из 10,000), используйте `BitmaskOptimizer`:
+
+```php
+use DFiks\UnPerm\Support\BitmaskOptimizer;
+
+// Вместо хранения 2^9999 (3000+ цифр)
+// Храним только индексы: [5, 42, 1000] (~20 байт)
+
+// Получить статистику
+$stats = BitmaskOptimizer::getStats($user->getPermissionBitmask());
+// ['bits_set' => 10, 'total_size' => 3015, 'compressed_size' => 35, 'compression_ratio' => 98.8]
+
+// Автоматическая оптимизация
+$optimized = BitmaskOptimizer::optimize($bitmask);
+// ['type' => 'indices', 'data' => '[5,42,1000]']
+
+// Восстановление
+$bitmask = BitmaskOptimizer::restore($optimized);
+```
+
+**Анализ эффективности:**
+
+```bash
+php artisan unperm:analyze-bitmask
+```
+
+Эта команда покажет:
+- Текущий размер всех битовых масок
+- Потенциальную экономию при оптимизации
+- Рекомендации по использованию
+
+**Когда использовать оптимизацию:**
+- ✅ Мало permissions на пользователя (< 5% от общего числа)
+- ✅ Большое количество permissions в системе (> 1000)
+- ❌ Плотное назначение permissions (> 50% от общего числа)
 
 ## Использование PermBit
 

@@ -12,7 +12,7 @@ class SyncPermissionsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config([
             'unperm.actions' => [
                 'users' => ['view' => 'View'],
@@ -52,7 +52,7 @@ class SyncPermissionsCommandTest extends TestCase
 
         $this->assertNotNull($admin);
         $this->assertNotNull($team);
-        
+
         // Группа должна иметь роль
         $this->assertTrue($team->roles->contains($admin));
     }
@@ -71,4 +71,3 @@ class SyncPermissionsCommandTest extends TestCase
         $this->assertDatabaseMissing('groups', ['slug' => 'old']);
     }
 }
-

@@ -14,7 +14,7 @@ class FullWorkflowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config([
             'unperm.actions' => [
                 'users' => [
@@ -78,7 +78,7 @@ class FullWorkflowTest extends TestCase
     {
         // 1. Синхронизируем всё из конфига одной командой
         $this->artisan('unperm:sync')->assertSuccessful();
-        
+
         // Проверяем что всё создалось
         $this->assertEquals(11, Action::count());
         $this->assertEquals(4, Role::count());
@@ -92,7 +92,7 @@ class FullWorkflowTest extends TestCase
         // Проверяем что роли имеют правильные actions
         $this->assertCount(3, $editorRole->actions);
         $this->assertCount(2, $moderatorRole->actions);
-        
+
         // Проверяем что группа имеет правильные роли
         $this->assertCount(2, $contentTeam->roles);
         $this->assertTrue($contentTeam->roles->contains($editorRole));
@@ -104,7 +104,7 @@ class FullWorkflowTest extends TestCase
         $user3 = User::create(['name' => 'Петр', 'email' => 'petr@test.com']);
 
         // 4. Назначаем разрешения пользователям
-        
+
         // Иван - напрямую action
         $user1->assignAction('users.view');
         $user1->assignAction('users.create');
@@ -186,16 +186,16 @@ class FullWorkflowTest extends TestCase
         $this->assertFalse($user1->hasAction('users.view'));
         $this->assertTrue($user1->hasAction('users.edit'));
         $this->assertTrue($user1->hasAction('users.delete'));
-        
+
         // 10. Удаляем роль у пользователя
         $user2->removeRole($editorRole);
         $user2 = $user2->fresh();
-        
+
         $this->assertFalse($user2->hasAction('posts.view'));
-        
+
         // 11. Пересчитываем битовые маски командой
         $this->artisan('unperm:rebuild-bitmask')->assertSuccessful();
-        
+
         $editorRole = $editorRole->fresh();
         $this->assertNotEquals('0', $editorRole->bitmask);
     }
@@ -206,7 +206,7 @@ class FullWorkflowTest extends TestCase
         $this->artisan('unperm:sync-actions')->assertSuccessful();
 
         $user = User::create(['name' => 'Test', 'email' => 'test@test.com']);
-        
+
         // Назначаем несколько actions напрямую
         $user->assignActions([
             'users.view',
@@ -219,7 +219,7 @@ class FullWorkflowTest extends TestCase
         $this->assertTrue($user->hasAnyAction(['users.edit', 'users.view']));
         $this->assertTrue($user->hasAllActions(['users.view', 'posts.view']));
         $this->assertFalse($user->hasAllActions(['users.view', 'posts.create']));
-        
+
         // Проверка с несуществующими actions
         $this->assertTrue($user->hasAnyAction(['users.view', 'unknown.action']));
         $this->assertFalse($user->hasAllActions(['users.view', 'users.delete']));
@@ -227,7 +227,7 @@ class FullWorkflowTest extends TestCase
         // Получаем список всех actions из битовой маски
         $mask = $user->getPermissionBitmask();
         $actions = PermBit::getActions($mask);
-        
+
         $this->assertCount(3, $actions);
         $this->assertContains('users.view', $actions);
         $this->assertContains('users.create', $actions);
@@ -244,7 +244,7 @@ class FullWorkflowTest extends TestCase
 
         // Получаем группу super-users из конфига (содержит viewer, editor, admin роли)
         $superGroup = Group::where('slug', 'super-users')->first();
-        
+
         // Проверяем что группа имеет все роли из конфига
         $this->assertCount(3, $superGroup->roles);
         $rolesSlugs = $superGroup->roles->pluck('slug')->toArray();
@@ -260,11 +260,11 @@ class FullWorkflowTest extends TestCase
         $this->assertTrue($user->hasAction('users.view'));
         $this->assertTrue($user->hasAction('posts.view'));
         $this->assertTrue($user->hasAction('comments.view'));
-        
+
         // editor дает posts.*
         $this->assertTrue($user->hasAction('posts.create'));
         $this->assertTrue($user->hasAction('posts.edit'));
-        
+
         // admin дает users.*
         $this->assertTrue($user->hasAction('users.create'));
         $this->assertTrue($user->hasAction('users.edit'));
@@ -276,9 +276,8 @@ class FullWorkflowTest extends TestCase
 
         // Должно быть много actions (из всех 3 ролей)
         $this->assertGreaterThan(7, count($actions));
-        
+
         // Проверяем что все маски работают корректно
         $this->assertNotEquals('0', $mask);
     }
 }
-

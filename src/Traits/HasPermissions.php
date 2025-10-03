@@ -52,6 +52,7 @@ trait HasPermissions
 
         if (!$this->actions()->where('actions.id', $action->id)->exists()) {
             $this->actions()->attach($action->id);
+            $this->clearPermissionCache();
         }
 
         return $this;
@@ -73,6 +74,7 @@ trait HasPermissions
         }
 
         $this->actions()->detach($action->id);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -97,6 +99,7 @@ trait HasPermissions
         })->toArray();
 
         $this->actions()->sync($actionIds);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -109,6 +112,7 @@ trait HasPermissions
 
         if (!$this->roles()->where('roles.id', $role->id)->exists()) {
             $this->roles()->attach($role->id);
+            $this->clearPermissionCache();
         }
 
         return $this;
@@ -130,6 +134,7 @@ trait HasPermissions
         }
 
         $this->roles()->detach($role->id);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -154,6 +159,7 @@ trait HasPermissions
         })->toArray();
 
         $this->roles()->sync($roleIds);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -166,6 +172,7 @@ trait HasPermissions
 
         if (!$this->groups()->where('groups.id', $group->id)->exists()) {
             $this->groups()->attach($group->id);
+            $this->clearPermissionCache();
         }
 
         return $this;
@@ -187,6 +194,7 @@ trait HasPermissions
         }
 
         $this->groups()->detach($group->id);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -211,6 +219,7 @@ trait HasPermissions
         })->toArray();
 
         $this->groups()->sync($groupIds);
+        $this->clearPermissionCache();
 
         return $this;
     }
@@ -218,8 +227,9 @@ trait HasPermissions
     public function hasAction(Action|string $action): bool
     {
         $slug = $action instanceof Action ? $action->slug : $action;
-        
+
         $bitmask = $this->getPermissionBitmask();
+
         return \DFiks\UnPerm\Support\PermBit::hasAction($bitmask, $slug);
     }
 
@@ -246,8 +256,9 @@ trait HasPermissions
         $slugs = array_map(function ($action) {
             return $action instanceof Action ? $action->slug : $action;
         }, $actions);
-        
+
         $bitmask = $this->getPermissionBitmask();
+
         return \DFiks\UnPerm\Support\PermBit::hasAnyAction($bitmask, $slugs);
     }
 
@@ -256,8 +267,9 @@ trait HasPermissions
         $slugs = array_map(function ($action) {
             return $action instanceof Action ? $action->slug : $action;
         }, $actions);
-        
+
         $bitmask = $this->getPermissionBitmask();
+
         return \DFiks\UnPerm\Support\PermBit::hasAllActions($bitmask, $slugs);
     }
 
@@ -307,6 +319,19 @@ trait HasPermissions
 
     public function getPermissionBitmask(): string
     {
+        // Используем кеширование если включено
+        if (config('unperm.cache.enabled') && config('unperm.cache.cache_user_bitmasks')) {
+            return \DFiks\UnPerm\Support\BitmaskCache::getUserBitmask($this);
+        }
+
+        return $this->calculatePermissionBitmask();
+    }
+
+    /**
+     * Вычислить битовую маску без кеша.
+     */
+    public function calculatePermissionBitmask(): string
+    {
         $bitmask = gmp_init('0');
 
         foreach ($this->actions as $action) {
@@ -331,14 +356,25 @@ trait HasPermissions
     {
         $bitmask = gmp_init($this->getPermissionBitmask());
         $checkBit = gmp_pow(2, $bit);
+
         return gmp_cmp(gmp_and($bitmask, $checkBit), 0) !== 0;
     }
 
     public function hasPermissionBitmask(string|int $mask): bool
     {
         $bitmask = gmp_init($this->getPermissionBitmask());
-        $checkMask = gmp_init((string)$mask);
+        $checkMask = gmp_init((string) $mask);
+
         return gmp_cmp(gmp_and($bitmask, $checkMask), $checkMask) === 0;
     }
 
+    /**
+     * Очистить кеш разрешений для этой модели.
+     */
+    protected function clearPermissionCache(): void
+    {
+        if (config('unperm.cache.enabled')) {
+            \DFiks\UnPerm\Support\BitmaskCache::clearUserBitmask($this);
+        }
+    }
 }

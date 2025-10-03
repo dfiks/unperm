@@ -71,8 +71,7 @@ class ActionModelTest extends TestCase
         ]);
 
         $action->clearBitmask()->save();
-        
+
         $this->assertEquals('0', $action->bitmask);
     }
 }
-

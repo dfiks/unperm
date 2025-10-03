@@ -33,10 +33,10 @@ class RoleModelTest extends TestCase
     public function testSyncsBitmaskFromActions(): void
     {
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '0']);
-        
+
         $action1 = Action::create(['name' => 'View', 'slug' => 'view', 'bitmask' => '1']);
         $action2 = Action::create(['name' => 'Edit', 'slug' => 'edit', 'bitmask' => '4']);
-        
+
         $role->actions()->attach([$action1->id, $action2->id]);
         $role->load('actions')->syncBitmaskFromActions()->save();
 
@@ -50,4 +50,3 @@ class RoleModelTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class, $role->groups());
     }
 }
-

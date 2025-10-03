@@ -25,9 +25,10 @@ class SyncRolesCommand extends Command
         }
 
         $rolesConfig = config('unperm.roles', []);
-        
+
         if (empty($rolesConfig)) {
             $this->warn('No roles found in config.');
+
             return self::FAILURE;
         }
 
@@ -36,33 +37,33 @@ class SyncRolesCommand extends Command
 
         foreach ($rolesConfig as $slug => $data) {
             $role = Role::firstOrNew(['slug' => $slug]);
-            
+
             $isNew = !$role->exists;
-            
+
             $role->name = $data['name'] ?? Str::title(str_replace('-', ' ', $slug));
             $role->description = $data['description'] ?? null;
             $role->bitmask = '0';
-            
+
             $role->save();
 
             // Синхронизируем actions
             $actionIds = $this->resolveActions($data['actions'] ?? []);
             $role->actions()->sync($actionIds);
-            
+
             // Пересчитываем bitmask
             $role->load('actions')->syncBitmaskFromActions()->save();
 
             if ($isNew) {
                 $created++;
-                $this->line("  <fg=green>✓</> Created: {$slug} with " . count($actionIds) . " actions");
+                $this->line("  <fg=green>✓</> Created: {$slug} with " . count($actionIds) . ' actions');
             } else {
                 $updated++;
-                $this->line("  <fg=yellow>↻</> Updated: {$slug} with " . count($actionIds) . " actions");
+                $this->line("  <fg=yellow>↻</> Updated: {$slug} with " . count($actionIds) . ' actions');
             }
         }
 
         $this->newLine();
-        $this->info("✓ Sync completed!");
+        $this->info('✓ Sync completed!');
         $this->table(
             ['Status', 'Count'],
             [
@@ -74,10 +75,10 @@ class SyncRolesCommand extends Command
 
         $this->newLine();
         $this->comment('Cleaning up old roles...');
-        
+
         $configSlugs = array_keys($rolesConfig);
         $deleted = Role::whereNotIn('slug', $configSlugs)->delete();
-        
+
         if ($deleted > 0) {
             $this->warn("Deleted {$deleted} roles that are no longer in config.");
         } else {
@@ -98,6 +99,7 @@ class SyncRolesCommand extends Command
 
         if ($allActions->isEmpty()) {
             $this->warn('No actions found in database. Run unperm:sync-actions first.');
+
             return [];
         }
 
@@ -107,7 +109,7 @@ class SyncRolesCommand extends Command
                 $escapedPattern = str_replace('*', '__WILDCARD__', $pattern);
                 $escapedPattern = preg_quote($escapedPattern, '/');
                 $regex = '/^' . str_replace('__WILDCARD__', '.*', $escapedPattern) . '$/';
-                
+
                 foreach ($allActions as $action) {
                     if (preg_match($regex, $action->slug)) {
                         $actionIds[] = $action->id;
@@ -126,4 +128,3 @@ class SyncRolesCommand extends Command
         return array_unique($actionIds);
     }
 }
-

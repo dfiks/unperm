@@ -32,8 +32,7 @@ class SyncPermissionsCommand extends Command
         $this->newLine();
 
         $this->info('✓ Full permissions sync completed!');
-        
+
         return self::SUCCESS;
     }
 }
-

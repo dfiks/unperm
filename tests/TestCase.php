@@ -11,7 +11,11 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
+        // Загружаем основные миграции пакета
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        
+        // Загружаем тестовые миграции (например, users таблица)
+        $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 
         $this->artisan('migrate', ['--database' => 'testing'])->run();
     }

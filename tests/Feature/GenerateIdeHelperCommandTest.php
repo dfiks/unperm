@@ -15,9 +15,9 @@ class GenerateIdeHelperCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->outputFile = sys_get_temp_dir() . '/test_ide_helper_permissions.php';
-        
+
         // Синхронизируем тестовые данные
         config([
             'unperm.actions' => [
@@ -43,7 +43,7 @@ class GenerateIdeHelperCommandTest extends TestCase
                 ],
             ],
         ]);
-        
+
         $this->artisan('unperm:sync');
     }
 
@@ -52,7 +52,7 @@ class GenerateIdeHelperCommandTest extends TestCase
         if (File::exists($this->outputFile)) {
             File::delete($this->outputFile);
         }
-        
+
         parent::tearDown();
     }
 
@@ -72,10 +72,10 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         // Проверяем что файл начинается с <?php
         $this->assertStringStartsWith('<?php', $content);
-        
+
         // Проверяем что файл валиден синтаксически
         $this->assertTrue(
             @eval('?>' . $content) !== false || error_get_last() === null
@@ -89,7 +89,7 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         // Проверяем что все actions есть в файле
         $this->assertStringContainsString('assignAction_users_view', $content);
         $this->assertStringContainsString('hasAction_users_create', $content);
@@ -103,7 +103,7 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         $this->assertStringContainsString('assignRole_admin', $content);
         $this->assertStringContainsString('hasRole_admin', $content);
         $this->assertStringContainsString('removeRole_admin', $content);
@@ -116,7 +116,7 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         $this->assertStringContainsString('assignGroup_content_team', $content);
         $this->assertStringContainsString('hasGroup_content_team', $content);
         $this->assertStringContainsString('removeGroup_content_team', $content);
@@ -129,15 +129,15 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         // Проверяем константы
         $this->assertStringContainsString('class UnPermActions', $content);
         $this->assertStringContainsString('USERS_VIEW', $content);
         $this->assertStringContainsString('POSTS_EDIT', $content);
-        
+
         $this->assertStringContainsString('class UnPermRoles', $content);
         $this->assertStringContainsString('ADMIN', $content);
-        
+
         $this->assertStringContainsString('class UnPermGroups', $content);
         $this->assertStringContainsString('CONTENT_TEAM', $content);
     }
@@ -149,7 +149,7 @@ class GenerateIdeHelperCommandTest extends TestCase
         ]);
 
         $content = File::get($this->outputFile);
-        
+
         // Проверяем что описания есть в PHPDoc
         $this->assertStringContainsString('View users', $content);
         $this->assertStringContainsString('Administrator', $content);
@@ -171,26 +171,25 @@ class GenerateIdeHelperCommandTest extends TestCase
     public function testGeneratesPhpStormMetaFile(): void
     {
         $metaFile = base_path('.phpstorm.meta.php');
-        
+
         $this->artisan('unperm:generate-ide-helper', [
             '--output' => $this->outputFile,
             '--meta' => true,
         ])->assertSuccessful();
 
         $this->assertFileExists($metaFile);
-        
+
         $content = File::get($metaFile);
-        
+
         // Проверяем что есть override для методов
         $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::hasAction(0)', $content);
         $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::assignAction(0)', $content);
         $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::hasRole(0)', $content);
-        
+
         // Проверяем что есть наши actions
         $this->assertStringContainsString("'users.view'", $content);
         $this->assertStringContainsString("'posts.edit'", $content);
-        
+
         File::delete($metaFile);
     }
 }
-

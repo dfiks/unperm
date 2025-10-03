@@ -24,9 +24,10 @@ class SyncActionsCommand extends Command
         }
 
         $actions = PermBit::rebuild();
-        
+
         if (empty($actions)) {
             $this->warn('No actions found in config.');
+
             return self::FAILURE;
         }
 
@@ -35,13 +36,13 @@ class SyncActionsCommand extends Command
 
         foreach ($actions as $slug => $data) {
             $action = Action::firstOrNew(['slug' => $slug]);
-            
+
             $isNew = !$action->exists;
-            
+
             $action->name = $data['name'];
             $action->description = "Category: {$data['category']} | Bit: {$data['bit_position']}";
             $action->bitmask = $data['bitmask'];
-            
+
             $action->save();
 
             if ($isNew) {
@@ -54,7 +55,7 @@ class SyncActionsCommand extends Command
         }
 
         $this->newLine();
-        $this->info("✓ Sync completed!");
+        $this->info('✓ Sync completed!');
         $this->table(
             ['Status', 'Count'],
             [
@@ -66,10 +67,10 @@ class SyncActionsCommand extends Command
 
         $this->newLine();
         $this->comment('Cleaning up old actions...');
-        
+
         $configSlugs = array_keys($actions);
         $deleted = Action::whereNotIn('slug', $configSlugs)->delete();
-        
+
         if ($deleted > 0) {
             $this->warn("Deleted {$deleted} actions that are no longer in config.");
         } else {
@@ -79,4 +80,3 @@ class SyncActionsCommand extends Command
         return self::SUCCESS;
     }
 }
-

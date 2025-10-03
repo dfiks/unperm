@@ -43,7 +43,7 @@ class RebuildBitmaskCommand extends Command
         foreach ($roles as $role) {
             $oldBitmask = $role->bitmask;
             $role->syncBitmaskFromActions()->save();
-            
+
             if ($oldBitmask !== $role->bitmask) {
                 $updated++;
                 $this->line("  <fg=green>✓</> {$role->name}: {$oldBitmask} → {$role->bitmask}");
@@ -64,7 +64,7 @@ class RebuildBitmaskCommand extends Command
         foreach ($groups as $group) {
             $oldBitmask = $group->bitmask;
             $group->syncBitmaskFromRolesAndActions()->save();
-            
+
             if ($oldBitmask !== $group->bitmask) {
                 $updated++;
                 $this->line("  <fg=green>✓</> {$group->name}: {$oldBitmask} → {$group->bitmask}");
@@ -77,4 +77,3 @@ class RebuildBitmaskCommand extends Command
         $this->info("Updated {$updated} of {$groups->count()} groups.");
     }
 }
-

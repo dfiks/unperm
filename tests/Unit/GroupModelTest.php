@@ -38,10 +38,10 @@ class GroupModelTest extends TestCase
     public function testSyncsBitmaskFromRolesAndActions(): void
     {
         $group = Group::create(['name' => 'Team', 'slug' => 'team', 'bitmask' => '0']);
-        
+
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '3']);
         $action = Action::create(['name' => 'Delete', 'slug' => 'delete', 'bitmask' => '8']);
-        
+
         $group->roles()->attach($role->id);
         $group->actions()->attach($action->id);
         $group->load(['roles', 'actions'])->syncBitmaskFromRolesAndActions()->save();
@@ -49,4 +49,3 @@ class GroupModelTest extends TestCase
         $this->assertEquals('11', $group->bitmask);
     }
 }
-

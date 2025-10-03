@@ -14,7 +14,7 @@ class RebuildBitmaskCommandTest extends TestCase
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '0']);
         $action1 = Action::create(['name' => 'View', 'slug' => 'view', 'bitmask' => '1']);
         $action2 = Action::create(['name' => 'Edit', 'slug' => 'edit', 'bitmask' => '2']);
-        
+
         $role->actions()->attach([$action1->id, $action2->id]);
 
         $this->artisan('unperm:rebuild-bitmask', ['--roles' => true])
@@ -28,7 +28,7 @@ class RebuildBitmaskCommandTest extends TestCase
         $group = Group::create(['name' => 'Team', 'slug' => 'team', 'bitmask' => '0']);
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '2']);
         $action = Action::create(['name' => 'Delete', 'slug' => 'delete', 'bitmask' => '4']);
-        
+
         $group->roles()->attach($role->id);
         $group->actions()->attach($action->id);
 
@@ -43,7 +43,7 @@ class RebuildBitmaskCommandTest extends TestCase
         $role = Role::create(['name' => 'Editor', 'slug' => 'editor', 'bitmask' => '0']);
         $group = Group::create(['name' => 'Team', 'slug' => 'team', 'bitmask' => '0']);
         $action = Action::create(['name' => 'View', 'slug' => 'view', 'bitmask' => '1']);
-        
+
         $role->actions()->attach($action->id);
         $group->roles()->attach($role->id);
 
@@ -54,4 +54,3 @@ class RebuildBitmaskCommandTest extends TestCase
         $this->assertEquals('1', $group->fresh()->bitmask);
     }
 }
-

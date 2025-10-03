@@ -20,7 +20,7 @@ class PermBit
                 $fullSlug = is_string($slug) ? "{$category}.{$slug}" : $category;
                 $bitmask = gmp_init(1);
                 $bitmask = gmp_mul($bitmask, gmp_pow(2, $bitPosition));
-                
+
                 $result[$fullSlug] = [
                     'slug' => $fullSlug,
                     'name' => is_string($name) ? $name : $slug,
@@ -29,7 +29,7 @@ class PermBit
                     'bitmask' => gmp_strval($bitmask),
                     'bitmask_hex' => gmp_strval($bitmask, 16),
                 ];
-                
+
                 self::$cache[$fullSlug] = $bitPosition;
                 $bitPosition++;
             }
@@ -41,6 +41,7 @@ class PermBit
     public static function rebuild(): array
     {
         $actions = config('unperm.actions', []);
+
         return self::build($actions);
     }
 
@@ -51,7 +52,7 @@ class PermBit
         }
 
         self::rebuild();
-        
+
         if (isset(self::$cache[$slug])) {
             return self::$cache[$slug];
         }
@@ -60,23 +61,24 @@ class PermBit
         if ($action && $action->bitmask !== '0') {
             $bitPosition = (int) log(gmp_intval(gmp_init($action->bitmask)), 2);
             self::$cache[$slug] = $bitPosition;
+
             return $bitPosition;
         }
-        
+
         return null;
     }
 
     public static function getBitmask(string $slug): string
     {
         $bitPosition = self::getBitPosition($slug);
-        
+
         if ($bitPosition === null) {
             return '0';
         }
 
         $bitmask = gmp_init(1);
         $bitmask = gmp_mul($bitmask, gmp_pow(2, $bitPosition));
-        
+
         return gmp_strval($bitmask);
     }
 
@@ -100,14 +102,14 @@ class PermBit
 
         $checkBit = gmp_init(1);
         $checkBit = gmp_mul($checkBit, gmp_pow(2, $bitPosition));
-        
+
         return gmp_cmp(gmp_and($bitmask, $checkBit), 0) !== 0;
     }
 
     public static function hasAction(string|GMP $bitmask, string $slug): bool
     {
         $bitPosition = self::getBitPosition($slug);
-        
+
         if ($bitPosition !== null) {
             return self::hasBit($bitmask, $bitPosition);
         }
@@ -120,8 +122,9 @@ class PermBit
         if (is_string($bitmask)) {
             $bitmask = gmp_init($bitmask);
         }
-        
+
         $actionMask = gmp_init($action->bitmask);
+
         return gmp_cmp(gmp_and($bitmask, $actionMask), $actionMask) === 0;
     }
 
@@ -230,4 +233,3 @@ class PermBit
         self::$cache = [];
     }
 }
-

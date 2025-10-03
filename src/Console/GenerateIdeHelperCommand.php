@@ -28,13 +28,14 @@ class GenerateIdeHelperCommand extends Command
 
         if ($actions->isEmpty() && $roles->isEmpty() && $groups->isEmpty()) {
             $this->warn('No permissions found in database. Run unperm:sync first.');
+
             return self::FAILURE;
         }
 
         $content = $this->generateContent($actions, $roles, $groups);
-        
+
         $outputPath = $this->option('output');
-        
+
         // Если путь относительный, используем корень проекта
         if (!$this->isAbsolutePath($outputPath)) {
             $outputPath = base_path($outputPath);
@@ -43,9 +44,9 @@ class GenerateIdeHelperCommand extends Command
         File::put($outputPath, $content);
 
         $this->newLine();
-        $this->info("✓ IDE helper generated successfully!");
+        $this->info('✓ IDE helper generated successfully!');
         $this->line("  File: {$outputPath}");
-        
+
         // Генерируем PhpStorm Meta файл для автодополнения строк
         if ($this->option('meta')) {
             $metaPath = base_path('.phpstorm.meta.php');
@@ -53,9 +54,9 @@ class GenerateIdeHelperCommand extends Command
             File::put($metaPath, $metaContent);
             $this->line("  Meta: {$metaPath}");
         }
-        
+
         $this->newLine();
-        
+
         $this->table(
             ['Type', 'Count'],
             [
@@ -66,7 +67,7 @@ class GenerateIdeHelperCommand extends Command
         );
 
         $this->newLine();
-        
+
         if ($this->option('meta')) {
             $this->comment('✓ PhpStorm Meta file generated!');
             $this->comment('  Restart PhpStorm to enable string autocomplete in:');
@@ -76,7 +77,7 @@ class GenerateIdeHelperCommand extends Command
         } else {
             $this->comment('Tip: Use --meta flag to generate .phpstorm.meta.php for string autocomplete');
         }
-        
+
         $this->newLine();
         $this->comment('Add generated files to .gitignore if needed.');
 
@@ -86,7 +87,7 @@ class GenerateIdeHelperCommand extends Command
     protected function generateContent($actions, $roles, $groups): string
     {
         $timestamp = now()->toDateTimeString();
-        
+
         $content = <<<PHP
 <?php
 
@@ -115,12 +116,12 @@ PHP;
         // Генерируем методы для Actions
         if ($actions->isNotEmpty()) {
             $content .= "        // =============== ACTIONS ===============\n\n";
-            
+
             foreach ($actions as $action) {
                 $slug = $action->slug;
                 $name = $action->name;
                 $description = $action->description ? " - {$action->description}" : '';
-                
+
                 $content .= <<<PHP
         /**
          * {$name}{$description}
@@ -151,12 +152,12 @@ PHP;
         // Генерируем методы для Roles
         if ($roles->isNotEmpty()) {
             $content .= "        // =============== ROLES ===============\n\n";
-            
+
             foreach ($roles as $role) {
                 $slug = $role->slug;
                 $name = $role->name;
                 $description = $role->description ? " - {$role->description}" : '';
-                
+
                 $content .= <<<PHP
         /**
          * {$name}{$description}
@@ -187,12 +188,12 @@ PHP;
         // Генерируем методы для Groups
         if ($groups->isNotEmpty()) {
             $content .= "        // =============== GROUPS ===============\n\n";
-            
+
             foreach ($groups as $group) {
                 $slug = $group->slug;
                 $name = $group->name;
                 $description = $group->description ? " - {$group->description}" : '';
-                
+
                 $content .= <<<PHP
         /**
          * {$name}{$description}
@@ -231,32 +232,32 @@ PHP;
         $content .= "     */\n";
         $content .= "    class UnPermActions\n";
         $content .= "    {\n";
-        
+
         foreach ($actions as $action) {
             $const = strtoupper(str_replace(['.', '-'], '_', $action->slug));
             $content .= "        public const {$const} = '{$action->slug}';\n";
         }
-        
+
         $content .= "    }\n\n";
-        
+
         $content .= "    class UnPermRoles\n";
         $content .= "    {\n";
-        
+
         foreach ($roles as $role) {
             $const = strtoupper(str_replace(['.', '-'], '_', $role->slug));
             $content .= "        public const {$const} = '{$role->slug}';\n";
         }
-        
+
         $content .= "    }\n\n";
-        
+
         $content .= "    class UnPermGroups\n";
         $content .= "    {\n";
-        
+
         foreach ($groups as $group) {
             $const = strtoupper(str_replace(['.', '-'], '_', $group->slug));
             $content .= "        public const {$const} = '{$group->slug}';\n";
         }
-        
+
         $content .= "    }\n";
         $content .= "}\n";
 
@@ -271,7 +272,7 @@ PHP;
     protected function generatePhpStormMeta($actions, $roles, $groups): string
     {
         $timestamp = now()->toDateTimeString();
-        
+
         $content = <<<'PHP'
 <?php
 
@@ -282,7 +283,7 @@ PHP;
  * 
 
 PHP;
-        
+
         $content .= " * Generated: {$timestamp}\n";
         $content .= <<<'PHP'
  */
@@ -428,4 +429,3 @@ PHP;
         return false;
     }
 }
-

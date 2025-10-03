@@ -1,11 +1,11 @@
 <?php
 
 /**
- * UnPerm IDE Helper - EXAMPLE
- * 
+ * UnPerm IDE Helper - EXAMPLE.
+ *
  * This file provides autocomplete support for IDE.
  * Generated: 2025-10-03 (Example)
- * 
+ *
  * Этот файл автоматически генерируется командой:
  * php artisan unperm:generate-ide-helper
  */
@@ -13,8 +13,8 @@
 namespace DFiks\UnPerm\IdeHelper {
 
     /**
-     * IDE Helper for HasPermissions trait
-     * 
+     * IDE Helper for HasPermissions trait.
+     *
      * This class provides autocomplete for permission methods.
      * All methods work through bitmask operations for maximum performance.
      */
@@ -23,92 +23,116 @@ namespace DFiks\UnPerm\IdeHelper {
         // =============== ACTIONS ===============
 
         /**
-         * View users
-         * 
+         * View users.
+         *
          * @return $this
          */
-        public function assignAction_users_view() {}
+        public function assignAction_users_view()
+        {
+        }
 
         /**
-         * View users
-         * 
+         * View users.
+         *
          * @return $this
          */
-        public function removeAction_users_view() {}
+        public function removeAction_users_view()
+        {
+        }
 
         /**
-         * Check: View users
-         * 
+         * Check: View users.
+         *
          * @return bool
          */
-        public function hasAction_users_view() {}
+        public function hasAction_users_view()
+        {
+        }
 
         /**
-         * Create posts
-         * 
+         * Create posts.
+         *
          * @return $this
          */
-        public function assignAction_posts_create() {}
+        public function assignAction_posts_create()
+        {
+        }
 
         /**
-         * Create posts
-         * 
+         * Create posts.
+         *
          * @return $this
          */
-        public function removeAction_posts_create() {}
+        public function removeAction_posts_create()
+        {
+        }
 
         /**
-         * Check: Create posts
-         * 
+         * Check: Create posts.
+         *
          * @return bool
          */
-        public function hasAction_posts_create() {}
+        public function hasAction_posts_create()
+        {
+        }
 
         // =============== ROLES ===============
 
         /**
-         * Administrator - Full system access
-         * 
+         * Administrator - Full system access.
+         *
          * @return $this
          */
-        public function assignRole_admin() {}
+        public function assignRole_admin()
+        {
+        }
 
         /**
-         * Administrator - Full system access
-         * 
+         * Administrator - Full system access.
+         *
          * @return $this
          */
-        public function removeRole_admin() {}
+        public function removeRole_admin()
+        {
+        }
 
         /**
-         * Check: Administrator - Full system access
-         * 
+         * Check: Administrator - Full system access.
+         *
          * @return bool
          */
-        public function hasRole_admin() {}
+        public function hasRole_admin()
+        {
+        }
 
         // =============== GROUPS ===============
 
         /**
-         * Content Team - Content management team
-         * 
+         * Content Team - Content management team.
+         *
          * @return $this
          */
-        public function assignGroup_content_team() {}
+        public function assignGroup_content_team()
+        {
+        }
 
         /**
-         * Content Team - Content management team
-         * 
+         * Content Team - Content management team.
+         *
          * @return $this
          */
-        public function removeGroup_content_team() {}
+        public function removeGroup_content_team()
+        {
+        }
 
         /**
-         * Check: Content Team - Content management team
-         * 
+         * Check: Content Team - Content management team.
+         *
          * @return bool
          */
-        public function hasGroup_content_team() {}
+        public function hasGroup_content_team()
+        {
+        }
     }
 }
 
@@ -116,7 +140,7 @@ namespace {
 
     /**
      * Permission Constants
-     * Use these constants instead of strings for better IDE support
+     * Use these constants instead of strings for better IDE support.
      */
     class UnPermActions
     {
@@ -140,4 +164,3 @@ namespace {
         public const MANAGEMENT = 'management';
     }
 }
-

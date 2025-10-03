@@ -10,7 +10,7 @@ class SyncActionsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config([
             'unperm.actions' => [
                 'users' => [
@@ -32,7 +32,7 @@ class SyncActionsCommandTest extends TestCase
         $this->assertDatabaseHas('actions', ['slug' => 'users.view']);
         $this->assertDatabaseHas('actions', ['slug' => 'users.create']);
         $this->assertDatabaseHas('actions', ['slug' => 'posts.view']);
-        
+
         $this->assertEquals(3, Action::count());
     }
 
@@ -84,4 +84,3 @@ class SyncActionsCommandTest extends TestCase
         $this->assertEquals(3, Action::count());
     }
 }
-

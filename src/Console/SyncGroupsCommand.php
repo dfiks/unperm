@@ -26,9 +26,10 @@ class SyncGroupsCommand extends Command
         }
 
         $groupsConfig = config('unperm.groups', []);
-        
+
         if (empty($groupsConfig)) {
             $this->warn('No groups found in config.');
+
             return self::FAILURE;
         }
 
@@ -37,13 +38,13 @@ class SyncGroupsCommand extends Command
 
         foreach ($groupsConfig as $slug => $data) {
             $group = Group::firstOrNew(['slug' => $slug]);
-            
+
             $isNew = !$group->exists;
-            
+
             $group->name = $data['name'] ?? Str::title(str_replace('-', ' ', $slug));
             $group->description = $data['description'] ?? null;
             $group->bitmask = '0';
-            
+
             $group->save();
 
             // Синхронизируем roles
@@ -53,21 +54,21 @@ class SyncGroupsCommand extends Command
             // Синхронизируем actions
             $actionIds = $this->resolveActions($data['actions'] ?? []);
             $group->actions()->sync($actionIds);
-            
+
             // Пересчитываем bitmask
             $group->load(['roles', 'actions'])->syncBitmaskFromRolesAndActions()->save();
 
             if ($isNew) {
                 $created++;
-                $this->line("  <fg=green>✓</> Created: {$slug} with " . count($roleIds) . " roles and " . count($actionIds) . " actions");
+                $this->line("  <fg=green>✓</> Created: {$slug} with " . count($roleIds) . ' roles and ' . count($actionIds) . ' actions');
             } else {
                 $updated++;
-                $this->line("  <fg=yellow>↻</> Updated: {$slug} with " . count($roleIds) . " roles and " . count($actionIds) . " actions");
+                $this->line("  <fg=yellow>↻</> Updated: {$slug} with " . count($roleIds) . ' roles and ' . count($actionIds) . ' actions');
             }
         }
 
         $this->newLine();
-        $this->info("✓ Sync completed!");
+        $this->info('✓ Sync completed!');
         $this->table(
             ['Status', 'Count'],
             [
@@ -79,10 +80,10 @@ class SyncGroupsCommand extends Command
 
         $this->newLine();
         $this->comment('Cleaning up old groups...');
-        
+
         $configSlugs = array_keys($groupsConfig);
         $deleted = Group::whereNotIn('slug', $configSlugs)->delete();
-        
+
         if ($deleted > 0) {
             $this->warn("Deleted {$deleted} groups that are no longer in config.");
         } else {
@@ -112,6 +113,7 @@ class SyncGroupsCommand extends Command
 
         if ($allActions->isEmpty()) {
             $this->warn('No actions found in database.');
+
             return [];
         }
 
@@ -121,7 +123,7 @@ class SyncGroupsCommand extends Command
                 $escapedPattern = str_replace('*', '__WILDCARD__', $pattern);
                 $escapedPattern = preg_quote($escapedPattern, '/');
                 $regex = '/^' . str_replace('__WILDCARD__', '.*', $escapedPattern) . '$/';
-                
+
                 foreach ($allActions as $action) {
                     if (preg_match($regex, $action->slug)) {
                         $actionIds[] = $action->id;
@@ -138,4 +140,3 @@ class SyncGroupsCommand extends Command
         return array_unique($actionIds);
     }
 }
-

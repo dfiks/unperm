@@ -2,7 +2,6 @@
 
 namespace DFiks\UnPerm\Tests\Feature;
 
-use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Models\Role;
 use DFiks\UnPerm\Tests\TestCase;
 
@@ -11,7 +10,7 @@ class SyncRolesCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Сначала создаем actions
         config([
             'unperm.actions' => [
@@ -36,7 +35,7 @@ class SyncRolesCommandTest extends TestCase
                 ],
             ],
         ]);
-        
+
         $this->artisan('unperm:sync-actions');
     }
 
@@ -47,7 +46,7 @@ class SyncRolesCommandTest extends TestCase
 
         $this->assertDatabaseHas('roles', ['slug' => 'admin', 'name' => 'Administrator']);
         $this->assertDatabaseHas('roles', ['slug' => 'editor', 'name' => 'Editor']);
-        
+
         $this->assertEquals(2, Role::count());
     }
 
@@ -67,7 +66,7 @@ class SyncRolesCommandTest extends TestCase
         $this->artisan('unperm:sync-roles');
 
         $admin = Role::where('slug', 'admin')->first();
-        
+
         // Должен иметь все users.* и posts.*
         $actionSlugs = $admin->actions->pluck('slug')->toArray();
         $this->assertContains('users.view', $actionSlugs);
@@ -85,7 +84,7 @@ class SyncRolesCommandTest extends TestCase
 
         $this->assertNotEquals('0', $admin->bitmask);
         $this->assertNotEquals('0', $editor->bitmask);
-        
+
         // Admin должен иметь больше прав
         $adminMask = gmp_init($admin->bitmask);
         $editorMask = gmp_init($editor->bitmask);
@@ -127,4 +126,3 @@ class SyncRolesCommandTest extends TestCase
         $this->assertEquals(2, Role::count());
     }
 }
-

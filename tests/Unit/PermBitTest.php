@@ -10,7 +10,7 @@ class PermBitTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         config([
             'unperm.actions' => [
                 'users' => [
@@ -24,7 +24,7 @@ class PermBitTest extends TestCase
                 ],
             ],
         ]);
-        
+
         PermBit::clearCache();
     }
 
@@ -88,9 +88,9 @@ class PermBitTest extends TestCase
     public function testAddsActionToMask(): void
     {
         $mask = '0';
-        
+
         $mask = PermBit::addAction($mask, 'users.create');
-        
+
         $this->assertEquals('2', $mask);
         $this->assertTrue(PermBit::hasAction($mask, 'users.create'));
     }
@@ -98,9 +98,9 @@ class PermBitTest extends TestCase
     public function testRemovesActionFromMask(): void
     {
         $mask = '7';
-        
+
         $mask = PermBit::removeAction($mask, 'users.create');
-        
+
         $this->assertEquals('5', $mask);
         $this->assertFalse(PermBit::hasAction($mask, 'users.create'));
     }
@@ -108,7 +108,7 @@ class PermBitTest extends TestCase
     public function testGetsActionsFromMask(): void
     {
         $mask = '7';
-        
+
         $actions = PermBit::getActions($mask);
 
         $this->assertCount(3, $actions);
@@ -120,7 +120,7 @@ class PermBitTest extends TestCase
     public function testConvertsToHex(): void
     {
         $mask = '255';
-        
+
         $hex = PermBit::toHex($mask);
 
         $this->assertEquals('ff', $hex);
@@ -129,7 +129,7 @@ class PermBitTest extends TestCase
     public function testConvertsToBinary(): void
     {
         $mask = '7';
-        
+
         $binary = PermBit::toBinary($mask);
 
         $this->assertEquals('111', $binary);
@@ -138,9 +138,8 @@ class PermBitTest extends TestCase
     public function testHandlesLargeNumbers(): void
     {
         $mask = gmp_strval(gmp_pow(2, 100));
-        
+
         $this->assertTrue(PermBit::hasBit($mask, 100));
         $this->assertFalse(PermBit::hasBit($mask, 99));
     }
 }
-

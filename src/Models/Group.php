@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DFiks\UnPerm\Models;
 
 use DFiks\UnPerm\Traits\HasBitmask;
+use DFiks\UnPerm\Traits\HasSparseBitmask;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,6 +14,7 @@ class Group extends Model
 {
     use HasUuids;
     use HasBitmask;
+    use HasSparseBitmask;
 
     protected $fillable = [
         'name',
