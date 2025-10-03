@@ -70,6 +70,7 @@ class UnPermServiceProvider extends ServiceProvider
             \Livewire\Livewire::component('unperm::manage-actions', \DFiks\UnPerm\Http\Livewire\ManageActions::class);
             \Livewire\Livewire::component('unperm::manage-roles', \DFiks\UnPerm\Http\Livewire\ManageRoles::class);
             \Livewire\Livewire::component('unperm::manage-groups', \DFiks\UnPerm\Http\Livewire\ManageGroups::class);
+            \Livewire\Livewire::component('unperm::manage-user-permissions', \DFiks\UnPerm\Http\Livewire\ManageUserPermissions::class);
         }
 
         // Регистрация middleware
