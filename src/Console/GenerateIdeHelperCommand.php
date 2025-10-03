@@ -71,9 +71,11 @@ class GenerateIdeHelperCommand extends Command
         if ($this->option('meta')) {
             $this->comment('✓ PhpStorm Meta file generated!');
             $this->comment('  Restart PhpStorm to enable string autocomplete in:');
-            $this->comment('  - hasAction(\'\')');
-            $this->comment('  - assignAction(\'\')');
-            $this->comment('  - hasRole(\'\'), hasGroup(\'\')');
+            $this->comment('  - hasAction(\'\'), hasRole(\'\'), hasGroup(\'\')');
+            $this->comment('  - assignAction(\'\'), removeAction(\'\')');
+            $this->comment('  - PermissionGate::check(\'\'), authorize(\'\')');
+            $this->comment('  - $this->can(\'\'), $this->authorize(\'\') in controllers');
+            $this->comment('  - can_permission(\'\'), authorize_permission(\'\')');
         } else {
             $this->comment('Tip: Use --meta flag to generate .phpstorm.meta.php for string autocomplete');
         }
@@ -407,6 +409,127 @@ PHP;
     override(\DFiks\UnPerm\Traits\HasPermissions::hasAllActions(0), type(0));
     override(\DFiks\UnPerm\Traits\HasPermissions::assignActions(0), type(0));
     override(\DFiks\UnPerm\Traits\HasPermissions::syncActions(0), type(0));
+
+    // ========== PermissionGate ==========
+    
+    override(\DFiks\UnPerm\Support\PermissionGate::check(0), map([
+
+PHP;
+
+        // Добавляем все actions для PermissionGate
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Support\PermissionGate::authorize(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Support\PermissionGate::any(0), type(0));
+    override(\DFiks\UnPerm\Support\PermissionGate::all(0), type(0));
+
+    // ========== Facade ==========
+    
+    override(\DFiks\UnPerm\Facades\PermissionGate::check(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Facades\PermissionGate::authorize(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Facades\PermissionGate::any(0), type(0));
+    override(\DFiks\UnPerm\Facades\PermissionGate::all(0), type(0));
+
+    // ========== AuthorizesPermissions Trait ==========
+    
+    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::can(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::authorize(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAny(0), type(0));
+    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAll(0), type(0));
+
+    // ========== Helper Functions ==========
+    
+    override(\can_permission(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\authorize_permission(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\can_any_permission(0), type(0));
+    override(\can_all_permissions(0), type(0));
 }
 
 PHP;
