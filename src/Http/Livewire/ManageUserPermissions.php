@@ -83,15 +83,26 @@ class ManageUserPermissions extends Component
             return;
         }
 
-        $user = $this->selectedUserModel::findOrFail($userId);
-        $this->selectedUserId = $userId;
-        
-        // Загружаем текущие разрешения пользователя
-        $this->userActions = $user->actions->pluck('id')->toArray();
-        $this->userRoles = $user->roles->pluck('id')->toArray();
-        $this->userGroups = $user->groups->pluck('id')->toArray();
-        
-        $this->showPermissionsModal = true;
+        try {
+            // Безопасно находим пользователя
+            $user = $this->selectedUserModel::with(['actions', 'roles', 'groups'])->find($userId);
+            
+            if (!$user) {
+                session()->flash('error', 'Пользователь не найден');
+                return;
+            }
+
+            $this->selectedUserId = $userId;
+            
+            // Загружаем текущие разрешения пользователя
+            $this->userActions = $user->actions->pluck('id')->toArray();
+            $this->userRoles = $user->roles->pluck('id')->toArray();
+            $this->userGroups = $user->groups->pluck('id')->toArray();
+            
+            $this->showPermissionsModal = true;
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Ошибка при загрузке пользователя: ' . $e->getMessage());
+        }
     }
 
     public function savePermissions()
@@ -100,15 +111,24 @@ class ManageUserPermissions extends Component
             return;
         }
 
-        $user = $this->selectedUserModel::findOrFail($this->selectedUserId);
-        
-        // Синхронизируем разрешения
-        $user->actions()->sync($this->userActions);
-        $user->roles()->sync($this->userRoles);
-        $user->groups()->sync($this->userGroups);
+        try {
+            $user = $this->selectedUserModel::find($this->selectedUserId);
+            
+            if (!$user) {
+                session()->flash('error', 'Пользователь не найден');
+                return;
+            }
+            
+            // Синхронизируем разрешения
+            $user->actions()->sync($this->userActions);
+            $user->roles()->sync($this->userRoles);
+            $user->groups()->sync($this->userGroups);
 
-        session()->flash('message', 'Разрешения обновлены успешно!');
-        $this->closeModal();
+            session()->flash('message', 'Разрешения обновлены успешно!');
+            $this->closeModal();
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Ошибка при сохранении: ' . $e->getMessage());
+        }
     }
 
     public function closeModal()

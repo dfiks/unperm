@@ -153,16 +153,49 @@ class ModelDiscovery
                 return null;
             }
 
-            $instance = app($className);
+            // Создаем экземпляр БЕЗ запросов к БД
+            // Используем newInstanceWithoutConstructor чтобы избежать вызова конструктора
+            $instance = $reflection->newInstanceWithoutConstructor();
+            
+            // Получаем имя таблицы безопасным способом
+            $table = $this->getTableName($className, $reflection);
 
             return [
                 'class' => $className,
                 'name' => class_basename($className),
-                'table' => $instance->getTable(),
+                'table' => $table,
             ];
         } catch (\Throwable $e) {
             // Игнорируем ошибки при инстанцировании
             return null;
+        }
+    }
+
+    /**
+     * Безопасно получить имя таблицы модели.
+     */
+    protected function getTableName(string $className, ReflectionClass $reflection): string
+    {
+        try {
+            // Пробуем получить через свойство $table
+            if ($reflection->hasProperty('table')) {
+                $property = $reflection->getProperty('table');
+                if ($property->isPublic() || $property->isProtected()) {
+                    $property->setAccessible(true);
+                    $instance = $reflection->newInstanceWithoutConstructor();
+                    $table = $property->getValue($instance);
+                    if ($table) {
+                        return $table;
+                    }
+                }
+            }
+
+            // Иначе генерируем стандартное имя таблицы Laravel
+            $className = class_basename($className);
+            return \Illuminate\Support\Str::snake(\Illuminate\Support\Str::pluralStudly($className));
+        } catch (\Throwable $e) {
+            // Возвращаем имя класса в snake_case как fallback
+            return \Illuminate\Support\Str::snake(class_basename($className));
         }
     }
 
