@@ -276,6 +276,132 @@ class ModelDiscovery
     public function clearCache(): void
     {
         $this->cache = [];
+        $this->resourceCache = [];
+    }
+
+    /**
+     * Найти все модели с HasResourcePermissions trait.
+     */
+    public function findModelsWithResourcePermissions(): array
+    {
+        if (!empty($this->resourceCache)) {
+            return $this->resourceCache;
+        }
+
+        $models = [];
+
+        $searchPaths = [
+            app_path('Models'),
+            app_path(),
+            base_path('app/Models'),
+        ];
+
+        foreach ($searchPaths as $path) {
+            if (File::exists($path)) {
+                $foundModels = $this->scanDirectoryForResources($path);
+                $models = array_merge($models, $foundModels);
+            }
+        }
+
+        $composerModels = $this->findResourceModelsFromComposer();
+        $models = array_merge($models, $composerModels);
+
+        $this->resourceCache = $models;
+        return $models;
+    }
+
+    /**
+     * Сканировать директорию на наличие моделей с HasResourcePermissions.
+     */
+    protected function scanDirectoryForResources(string $path): array
+    {
+        $models = [];
+        $files = File::allFiles($path);
+
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $className = $this->getClassNameFromFile($file->getPathname());
+            if (!$className) {
+                continue;
+            }
+
+            $model = $this->checkModelHasResourcePermissions($className);
+            if ($model) {
+                $models[$className] = $model;
+            }
+        }
+
+        return $models;
+    }
+
+    /**
+     * Найти модели с HasResourcePermissions из composer.
+     */
+    protected function findResourceModelsFromComposer(): array
+    {
+        $models = [];
+        $composerPath = base_path('vendor/composer/autoload_classmap.php');
+
+        if (!file_exists($composerPath)) {
+            return $models;
+        }
+
+        $classmap = require $composerPath;
+
+        foreach ($classmap as $className => $filePath) {
+            if (str_contains($filePath, '/vendor/') || str_contains($filePath, '/tests/')) {
+                continue;
+            }
+
+            if (!class_exists($className)) {
+                continue;
+            }
+
+            $model = $this->checkModelHasResourcePermissions($className);
+            if ($model) {
+                $models[$className] = $model;
+            }
+        }
+
+        return $models;
+    }
+
+    /**
+     * Проверить использует ли модель HasResourcePermissions.
+     */
+    protected function checkModelHasResourcePermissions(string $className): ?array
+    {
+        try {
+            $reflection = new ReflectionClass($className);
+
+            if (!$reflection->isSubclassOf(\Illuminate\Database\Eloquent\Model::class)) {
+                return null;
+            }
+
+            if (!$this->usesTraitRecursive($reflection, HasResourcePermissions::class)) {
+                return null;
+            }
+
+            $instance = $reflection->newInstanceWithoutConstructor();
+            $table = $this->getTableName($className, $reflection);
+
+            // Получаем resource key
+            $resourceKey = method_exists($instance, 'getResourcePermissionKey')
+                ? $instance->getResourcePermissionKey()
+                : Str::plural(Str::snake(class_basename($className)));
+
+            return [
+                'class' => $className,
+                'name' => class_basename($className),
+                'table' => $table,
+                'resource_key' => $resourceKey,
+            ];
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
 
