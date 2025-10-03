@@ -41,6 +41,10 @@
                     <i class="fas fa-user-shield w-5"></i>
                     <span class="ml-3">Users</span>
                 </a>
+                <a href="{{ route('unperm.resources') }}" class="flex items-center px-6 py-3 hover:bg-indigo-800 transition {{ request()->routeIs('unperm.resources') ? 'bg-indigo-800 border-l-4 border-white' : '' }}">
+                    <i class="fas fa-folder-open w-5"></i>
+                    <span class="ml-3">Resources</span>
+                </a>
             </nav>
             
             <div class="absolute bottom-0 w-64 p-6 text-sm text-indigo-200">

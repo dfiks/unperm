@@ -12,5 +12,6 @@ Route::prefix('unperm')
         Route::get('/roles', [UnPermDashboardController::class, 'roles'])->name('roles');
         Route::get('/groups', [UnPermDashboardController::class, 'groups'])->name('groups');
         Route::get('/users', [UnPermDashboardController::class, 'users'])->name('users');
+        Route::get('/resources', [UnPermDashboardController::class, 'resources'])->name('resources');
     });
 

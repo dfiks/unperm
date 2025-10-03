@@ -42,5 +42,10 @@ class UnPermDashboardController extends Controller
     {
         return view('unperm::users.index');
     }
+
+    public function resources()
+    {
+        return view('unperm::resources.index');
+    }
 }
 

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace DFiks\UnPerm\Services;
 
 use DFiks\UnPerm\Traits\HasPermissions;
+use DFiks\UnPerm\Traits\HasResourcePermissions;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use ReflectionClass;
 
 /**
@@ -14,6 +16,7 @@ use ReflectionClass;
 class ModelDiscovery
 {
     protected array $cache = [];
+    protected array $resourceCache = [];
 
     /**
      * Найти все модели, использующие HasPermissions trait.
