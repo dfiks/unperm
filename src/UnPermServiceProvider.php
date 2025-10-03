@@ -52,7 +52,7 @@ class UnPermServiceProvider extends ServiceProvider
             
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/unperm'),
-            ], 'unperm-views');
+            ], ['unperm-views', 'unperm-views-force']);
 
             $this->commands([
                 SyncActionsCommand::class,
