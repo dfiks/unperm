@@ -123,7 +123,7 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <button wire:click="editPermissions('{{ $user->id }}')" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+                                    <button wire:click="editPermissions('{{ $user->getKey() }}')" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
                                         <i class="fas fa-edit mr-2"></i> Управление
                                     </button>
                                 </td>

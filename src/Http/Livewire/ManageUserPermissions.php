@@ -51,19 +51,26 @@ class ManageUserPermissions extends Component
         $users = collect();
         
         if ($this->selectedUserModel && class_exists($this->selectedUserModel)) {
-            $query = $this->selectedUserModel::query();
-            
-            if ($this->search) {
-                // Пробуем искать по разным полям
-                $query->where(function ($q) {
-                    $q->where('name', 'like', "%{$this->search}%")
-                      ->orWhere('email', 'like', "%{$this->search}%");
-                });
+            try {
+                $query = $this->selectedUserModel::query();
+                
+                if ($this->search) {
+                    // Пробуем искать по разным полям
+                    $query->where(function ($q) {
+                        $searchFields = ['name', 'email', 'username', 'first_name', 'last_name'];
+                        foreach ($searchFields as $field) {
+                            $q->orWhere($field, 'like', "%{$this->search}%");
+                        }
+                    });
+                }
+                
+                $users = $query->with(['actions', 'roles', 'groups'])
+                              ->orderBy('created_at', 'desc')
+                              ->paginate(15);
+            } catch (\Throwable $e) {
+                session()->flash('error', 'Ошибка при загрузке пользователей: ' . $e->getMessage());
+                $users = collect();
             }
-            
-            $users = $query->with(['actions', 'roles', 'groups'])
-                          ->orderBy('created_at', 'desc')
-                          ->paginate(15);
         }
 
         return view('unperm::livewire.manage-user-permissions', [
@@ -83,12 +90,21 @@ class ManageUserPermissions extends Component
             return;
         }
 
+        // Валидация что userId не пустой
+        if (empty($userId)) {
+            session()->flash('error', 'ID пользователя не указан');
+            return;
+        }
+
         try {
             // Безопасно находим пользователя
-            $user = $this->selectedUserModel::with(['actions', 'roles', 'groups'])->find($userId);
+            // Используем whereKey для поддержки разных типов первичных ключей (id, uuid, ulid, etc.)
+            $user = $this->selectedUserModel::with(['actions', 'roles', 'groups'])
+                ->whereKey($userId)
+                ->first();
             
             if (!$user) {
-                session()->flash('error', 'Пользователь не найден');
+                session()->flash('error', "Пользователь с ID '{$userId}' не найден");
                 return;
             }
 
@@ -108,14 +124,16 @@ class ManageUserPermissions extends Component
     public function savePermissions()
     {
         if (!$this->selectedUserModel || !$this->selectedUserId) {
+            session()->flash('error', 'Модель или ID пользователя не указаны');
             return;
         }
 
         try {
-            $user = $this->selectedUserModel::find($this->selectedUserId);
+            // Используем whereKey для поддержки разных типов первичных ключей
+            $user = $this->selectedUserModel::whereKey($this->selectedUserId)->first();
             
             if (!$user) {
-                session()->flash('error', 'Пользователь не найден');
+                session()->flash('error', "Пользователь с ID '{$this->selectedUserId}' не найден");
                 return;
             }
             
