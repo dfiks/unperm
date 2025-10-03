@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\File;
 class GenerateIdeHelperCommand extends Command
 {
     protected $signature = 'unperm:generate-ide-helper 
-                            {--output=_ide_helper_permissions.php : Output file path}';
+                            {--output=_ide_helper_permissions.php : Output file path}
+                            {--meta : Also generate .phpstorm.meta.php file}';
 
     protected $description = 'Generate IDE helper file for permissions autocomplete';
 
@@ -44,6 +45,15 @@ class GenerateIdeHelperCommand extends Command
         $this->newLine();
         $this->info("✓ IDE helper generated successfully!");
         $this->line("  File: {$outputPath}");
+        
+        // Генерируем PhpStorm Meta файл для автодополнения строк
+        if ($this->option('meta')) {
+            $metaPath = base_path('.phpstorm.meta.php');
+            $metaContent = $this->generatePhpStormMeta($actions, $roles, $groups);
+            File::put($metaPath, $metaContent);
+            $this->line("  Meta: {$metaPath}");
+        }
+        
         $this->newLine();
         
         $this->table(
@@ -56,7 +66,19 @@ class GenerateIdeHelperCommand extends Command
         );
 
         $this->newLine();
-        $this->comment('Add this file to .gitignore if needed.');
+        
+        if ($this->option('meta')) {
+            $this->comment('✓ PhpStorm Meta file generated!');
+            $this->comment('  Restart PhpStorm to enable string autocomplete in:');
+            $this->comment('  - hasAction(\'\')');
+            $this->comment('  - assignAction(\'\')');
+            $this->comment('  - hasRole(\'\'), hasGroup(\'\')');
+        } else {
+            $this->comment('Tip: Use --meta flag to generate .phpstorm.meta.php for string autocomplete');
+        }
+        
+        $this->newLine();
+        $this->comment('Add generated files to .gitignore if needed.');
 
         return self::SUCCESS;
     }
@@ -244,6 +266,151 @@ PHP;
     protected function slugToMethod(string $slug): string
     {
         return str_replace(['.', '-', ' '], '_', $slug);
+    }
+
+    protected function generatePhpStormMeta($actions, $roles, $groups): string
+    {
+        $timestamp = now()->toDateTimeString();
+        
+        $content = <<<'PHP'
+<?php
+
+/**
+ * PhpStorm Meta for UnPerm
+ * 
+ * This file provides string literal autocomplete in PhpStorm/IDE.
+ * 
+
+PHP;
+        
+        $content .= " * Generated: {$timestamp}\n";
+        $content .= <<<'PHP'
+ */
+
+namespace PHPSTORM_META {
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::hasAction(0), map([
+
+PHP;
+
+        // Добавляем все actions
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::assignAction(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::removeAction(0), map([
+
+PHP;
+
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::hasRole(0), map([
+
+PHP;
+
+        foreach ($roles as $role) {
+            $slug = $role->slug;
+            $name = addslashes($role->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::assignRole(0), map([
+
+PHP;
+
+        foreach ($roles as $role) {
+            $slug = $role->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::removeRole(0), map([
+
+PHP;
+
+        foreach ($roles as $role) {
+            $slug = $role->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::hasGroup(0), map([
+
+PHP;
+
+        foreach ($groups as $group) {
+            $slug = $group->slug;
+            $name = addslashes($group->name);
+            $content .= "        '{$slug}' => '{$name}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::assignGroup(0), map([
+
+PHP;
+
+        foreach ($groups as $group) {
+            $slug = $group->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    override(\DFiks\UnPerm\Traits\HasPermissions::removeGroup(0), map([
+
+PHP;
+
+        foreach ($groups as $group) {
+            $slug = $group->slug;
+            $content .= "        '{$slug}' => '{$slug}',\n";
+        }
+
+        $content .= <<<'PHP'
+    ]));
+
+    // Поддержка для массивов
+    override(\DFiks\UnPerm\Traits\HasPermissions::hasAnyAction(0), type(0));
+    override(\DFiks\UnPerm\Traits\HasPermissions::hasAllActions(0), type(0));
+    override(\DFiks\UnPerm\Traits\HasPermissions::assignActions(0), type(0));
+    override(\DFiks\UnPerm\Traits\HasPermissions::syncActions(0), type(0));
+}
+
+PHP;
+
+        return $content;
     }
 
     protected function isAbsolutePath(string $path): bool

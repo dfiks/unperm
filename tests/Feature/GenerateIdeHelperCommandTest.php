@@ -167,5 +167,30 @@ class GenerateIdeHelperCommandTest extends TestCase
             '--output' => $this->outputFile,
         ])->assertFailed();
     }
+
+    public function testGeneratesPhpStormMetaFile(): void
+    {
+        $metaFile = base_path('.phpstorm.meta.php');
+        
+        $this->artisan('unperm:generate-ide-helper', [
+            '--output' => $this->outputFile,
+            '--meta' => true,
+        ])->assertSuccessful();
+
+        $this->assertFileExists($metaFile);
+        
+        $content = File::get($metaFile);
+        
+        // Проверяем что есть override для методов
+        $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::hasAction(0)', $content);
+        $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::assignAction(0)', $content);
+        $this->assertStringContainsString('override(\\DFiks\\UnPerm\\Traits\\HasPermissions::hasRole(0)', $content);
+        
+        // Проверяем что есть наши actions
+        $this->assertStringContainsString("'users.view'", $content);
+        $this->assertStringContainsString("'posts.edit'", $content);
+        
+        File::delete($metaFile);
+    }
 }
 
