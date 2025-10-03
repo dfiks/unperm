@@ -53,6 +53,7 @@ class UnPermServiceProvider extends ServiceProvider
                 RebuildBitmaskCommand::class,
                 GenerateIdeHelperCommand::class,
                 AnalyzeBitmaskCommand::class,
+                Console\ListModelsCommand::class,
             ]);
         }
 

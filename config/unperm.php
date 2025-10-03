@@ -19,6 +19,21 @@ return [
         'group' => DFiks\UnPerm\Models\Group::class,
     ],
 
+    /*
+    | Модели пользователей для UI управления разрешениями
+    |
+    | Здесь можно явно указать модели, которые используют HasPermissions trait.
+    | Если не указано - система автоматически найдет все модели с этим trait.
+    |
+    | Пример:
+    | 'user_models' => [
+    |     App\Models\User::class,
+    |     App\Models\Admin::class,
+    |     App\Models\Customer::class,
+    | ],
+    */
+    'user_models' => [],
+
     'cache' => [
         'enabled' => true,
         'ttl' => 3600,
