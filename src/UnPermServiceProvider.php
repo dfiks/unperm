@@ -52,11 +52,7 @@ class UnPermServiceProvider extends ServiceProvider
             
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/unperm'),
-            ], ['unperm-views', 'unperm-views-force']);
-            
-            $this->publishes([
-                __DIR__ . '/../public/build' => public_path('vendor/unperm/build'),
-            ], 'unperm-assets');
+            ], 'unperm-views');
 
             $this->commands([
                 SyncActionsCommand::class,
@@ -75,7 +71,6 @@ class UnPermServiceProvider extends ServiceProvider
 
         // Загрузка routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
 
         // Загрузка миграций
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
