@@ -1,4 +1,9 @@
+/node_modules
+/public/build
+/public/hot
+/vendor
+.env
 .phpunit.result.cache
-vendor/
-.idea/
-.git/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
