@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool all(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
  * @method static void authorize(string $ability, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
  * @method static array getRules()
+ * @method static bool isSuperAdmin(?\Illuminate\Database\Eloquent\Model $user = null)
+ * @method static ?string getSuperAdminReason(?\Illuminate\Database\Eloquent\Model $user = null)
  *
  * @see \DFiks\UnPerm\Support\PermissionGate
  */

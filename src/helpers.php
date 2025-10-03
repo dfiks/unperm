@@ -43,3 +43,13 @@ if (!function_exists('can_all_permissions')) {
     }
 }
 
+if (!function_exists('is_superadmin')) {
+    /**
+     * Проверить является ли пользователь суперадмином.
+     */
+    function is_superadmin(?Model $user = null): bool
+    {
+        return app('unperm.gate')->isSuperAdmin($user);
+    }
+}
+

@@ -16,6 +16,20 @@ class PermissionGate
     protected array $rules = [];
     protected array $beforeCallbacks = [];
     protected array $afterCallbacks = [];
+    protected ?SuperAdminChecker $superAdminChecker = null;
+
+    public function __construct()
+    {
+        $this->superAdminChecker = new SuperAdminChecker();
+        
+        // Регистрируем проверку суперадминов как before callback
+        $this->before(function ($user, $ability, $arguments) {
+            if ($this->superAdminChecker->check($user)) {
+                return true;
+            }
+            return null;
+        });
+    }
 
     /**
      * Определить правило доступа.
@@ -218,6 +232,34 @@ class PermissionGate
     public function getRules(): array
     {
         return array_keys($this->rules);
+    }
+
+    /**
+     * Проверить является ли пользователь суперадмином.
+     */
+    public function isSuperAdmin(?Model $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $this->superAdminChecker->check($user);
+    }
+
+    /**
+     * Получить причину почему пользователь суперадмин.
+     */
+    public function getSuperAdminReason(?Model $user = null): ?string
+    {
+        $user = $user ?? Auth::user();
+
+        if (!$user) {
+            return null;
+        }
+
+        return $this->superAdminChecker->getReason($user);
     }
 }
 
