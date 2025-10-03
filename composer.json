@@ -1,7 +1,7 @@
 {
   "name": "dfiks/unperm",
   "description": "A Laravel 12 package for Permissions.",
-  "version": "v0.0.5-alpha",
+  "version": "v0.0.7-alpha",
   "type": "library",
   "license": "MIT",
   "require": {
