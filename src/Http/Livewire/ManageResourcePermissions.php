@@ -118,21 +118,31 @@ class ManageResourcePermissions extends Component
         
         // Получаем всех пользователей с правами на этот ресурс
         foreach ($this->availableActions as $action) {
-            $users = ResourcePermission::getUsersWithAccess($resource, $action);
-            
-            foreach ($users as $user) {
-                $userId = $user->getKey();
-                
-                if (!isset($this->userPermissions[$userId])) {
-                    $this->userPermissions[$userId] = [
-                        'id' => $userId,
-                        'name' => $user->name ?? $user->email ?? "User {$userId}",
-                        'email' => $user->email ?? '',
-                        'actions' => [],
-                    ];
+            // Перебираем все модели пользователей
+            foreach ($this->availableUserModels as $userModelClass => $info) {
+                try {
+                    $users = ResourcePermission::getUsersWithAccess($resource, $action, $userModelClass);
+                    
+                    foreach ($users as $user) {
+                        $userId = $user->getKey();
+                        
+                        if (!isset($this->userPermissions[$userId])) {
+                            $this->userPermissions[$userId] = [
+                                'id' => $userId,
+                                'name' => $user->name ?? $user->email ?? "User {$userId}",
+                                'email' => $user->email ?? '',
+                                'actions' => [],
+                            ];
+                        }
+                        
+                        if (!in_array($action, $this->userPermissions[$userId]['actions'])) {
+                            $this->userPermissions[$userId]['actions'][] = $action;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Пропускаем если модель недоступна
+                    continue;
                 }
-                
-                $this->userPermissions[$userId]['actions'][] = $action;
             }
         }
     }
