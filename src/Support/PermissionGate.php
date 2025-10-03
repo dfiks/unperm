@@ -48,9 +48,10 @@ class PermissionGate
      * @param string $ability Название способности
      * @param mixed $arguments Аргументы для проверки (обычно модель)
      * @param Model|null $user Пользователь (если null - текущий)
-     * @return bool
+     * @param bool $fluent Вернуть PermissionResult вместо bool
+     * @return bool|PermissionResult
      */
-    public function check(string $ability, mixed $arguments = null, ?Model $user = null): bool
+    public function check(string $ability, mixed $arguments = null, ?Model $user = null, bool $fluent = false): bool|PermissionResult
     {
         $user = $user ?? Auth::user();
 
@@ -82,7 +83,20 @@ class PermissionGate
             }
         }
 
-        return $result;
+        return $fluent ? PermissionResult::make($result, $ability, $arguments) : $result;
+    }
+
+    /**
+     * Проверить право доступа с fluent API.
+     *
+     * @param string $ability Название способности
+     * @param mixed $arguments Аргументы для проверки
+     * @param Model|null $user Пользователь
+     * @return PermissionResult
+     */
+    public function can(string $ability, mixed $arguments = null, ?Model $user = null): PermissionResult
+    {
+        return $this->check($ability, $arguments, $user, fluent: true);
     }
 
     /**
@@ -189,29 +203,53 @@ class PermissionGate
     /**
      * Проверить любое из прав.
      */
-    public function any(array $abilities, mixed $arguments = null, ?Model $user = null): bool
+    public function any(array $abilities, mixed $arguments = null, ?Model $user = null, bool $fluent = false): bool|PermissionResult
     {
+        $result = false;
+        $abilityName = implode(' OR ', $abilities);
+
         foreach ($abilities as $ability) {
             if ($this->check($ability, $arguments, $user)) {
-                return true;
+                $result = true;
+                break;
             }
         }
 
-        return false;
+        return $fluent ? PermissionResult::make($result, $abilityName, $arguments) : $result;
     }
 
     /**
      * Проверить все права.
      */
-    public function all(array $abilities, mixed $arguments = null, ?Model $user = null): bool
+    public function all(array $abilities, mixed $arguments = null, ?Model $user = null, bool $fluent = false): bool|PermissionResult
     {
+        $result = true;
+        $abilityName = implode(' AND ', $abilities);
+
         foreach ($abilities as $ability) {
             if (!$this->check($ability, $arguments, $user)) {
-                return false;
+                $result = false;
+                break;
             }
         }
 
-        return true;
+        return $fluent ? PermissionResult::make($result, $abilityName, $arguments) : $result;
+    }
+
+    /**
+     * Проверить любое из прав с fluent API.
+     */
+    public function canAny(array $abilities, mixed $arguments = null, ?Model $user = null): PermissionResult
+    {
+        return $this->any($abilities, $arguments, $user, fluent: true);
+    }
+
+    /**
+     * Проверить все права с fluent API.
+     */
+    public function canAll(array $abilities, mixed $arguments = null, ?Model $user = null): PermissionResult
+    {
+        return $this->all($abilities, $arguments, $user, fluent: true);
     }
 
     /**
@@ -262,4 +300,5 @@ class PermissionGate
         return $this->superAdminChecker->getReason($user);
     }
 }
+
 

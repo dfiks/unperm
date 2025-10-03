@@ -438,8 +438,39 @@ PHP;
         $content .= <<<'PHP'
     ]));
 
-    override(\DFiks\UnPerm\Support\PermissionGate::any(0), type(0));
-    override(\DFiks\UnPerm\Support\PermissionGate::all(0), type(0));
+    // Для canAny/canAll - массив abilities
+    expectedArguments(\DFiks\UnPerm\Support\PermissionGate::any(0), 
+PHP;
+
+        // Генерируем expectedArguments для массива
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Support\PermissionGate::all(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Support\PermissionGate::canAny(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Support\PermissionGate::canAll(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
 
     // ========== Facade ==========
     
@@ -468,8 +499,37 @@ PHP;
         $content .= <<<'PHP'
     ]));
 
-    override(\DFiks\UnPerm\Facades\PermissionGate::any(0), type(0));
-    override(\DFiks\UnPerm\Facades\PermissionGate::all(0), type(0));
+    expectedArguments(\DFiks\UnPerm\Facades\PermissionGate::any(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Facades\PermissionGate::all(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Facades\PermissionGate::canAny(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Facades\PermissionGate::canAll(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
 
     // ========== AuthorizesPermissions Trait ==========
     
@@ -498,8 +558,21 @@ PHP;
         $content .= <<<'PHP'
     ]));
 
-    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAny(0), type(0));
-    override(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAll(0), type(0));
+    expectedArguments(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAny(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\DFiks\UnPerm\Traits\AuthorizesPermissions::canAll(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
 
     // ========== Helper Functions ==========
     
@@ -528,13 +601,40 @@ PHP;
         $content .= <<<'PHP'
     ]));
 
-    override(\can_any_permission(0), type(0));
-    override(\can_all_permissions(0), type(0));
+    expectedArguments(\can_any_permission(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
+
+    expectedArguments(\can_all_permissions(0), 
+PHP;
+
+        $this->generateExpectedArguments($content, $actions);
+
+        $content .= <<<'PHP'
+    );
 }
 
 PHP;
 
         return $content;
+    }
+
+    /**
+     * Генерировать expectedArguments для массива abilities.
+     */
+    protected function generateExpectedArguments(string &$content, $actions): void
+    {
+        foreach ($actions as $action) {
+            $slug = $action->slug;
+            $name = addslashes($action->name);
+            $content .= "'{$slug}', ";
+        }
+        // Убираем последнюю запятую и пробел
+        $content = rtrim($content, ', ');
     }
 
     protected function isAbsolutePath(string $path): bool

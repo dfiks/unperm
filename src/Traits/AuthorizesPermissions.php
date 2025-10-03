@@ -85,11 +85,11 @@ trait AuthorizesPermissions
     }
 
     /**
-     * Проверить права для текущего пользователя.
+     * Проверить права для текущего пользователя с fluent API.
      */
-    protected function can(string $ability, mixed $arguments = null): bool
+    protected function can(string $ability, mixed $arguments = null): \DFiks\UnPerm\Support\PermissionResult
     {
-        return app('unperm.gate')->check($ability, $arguments);
+        return app('unperm.gate')->can($ability, $arguments);
     }
 
     /**
@@ -101,19 +101,19 @@ trait AuthorizesPermissions
     }
 
     /**
-     * Проверить любое из прав.
+     * Проверить любое из прав с fluent API.
      */
-    protected function canAny(array $abilities, mixed $arguments = null): bool
+    protected function canAny(array $abilities, mixed $arguments = null): \DFiks\UnPerm\Support\PermissionResult
     {
-        return app('unperm.gate')->any($abilities, $arguments);
+        return app('unperm.gate')->canAny($abilities, $arguments);
     }
 
     /**
-     * Проверить все права.
+     * Проверить все права с fluent API.
      */
-    protected function canAll(array $abilities, mixed $arguments = null): bool
+    protected function canAll(array $abilities, mixed $arguments = null): \DFiks\UnPerm\Support\PermissionResult
     {
-        return app('unperm.gate')->all($abilities, $arguments);
+        return app('unperm.gate')->canAll($abilities, $arguments);
     }
 }
 

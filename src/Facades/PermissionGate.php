@@ -8,11 +8,14 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static void define(string $ability, \Closure|array|string $callback)
- * @method static bool check(string $ability, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
+ * @method static bool|PermissionResult check(string $ability, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null, bool $fluent = false)
+ * @method static \DFiks\UnPerm\Support\PermissionResult can(string $ability, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
  * @method static void before(\Closure $callback)
  * @method static void after(\Closure $callback)
- * @method static bool any(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
- * @method static bool all(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
+ * @method static bool|PermissionResult any(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null, bool $fluent = false)
+ * @method static bool|PermissionResult all(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null, bool $fluent = false)
+ * @method static \DFiks\UnPerm\Support\PermissionResult canAny(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
+ * @method static \DFiks\UnPerm\Support\PermissionResult canAll(array $abilities, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
  * @method static void authorize(string $ability, mixed $arguments = null, ?\Illuminate\Database\Eloquent\Model $user = null)
  * @method static array getRules()
  * @method static bool isSuperAdmin(?\Illuminate\Database\Eloquent\Model $user = null)
