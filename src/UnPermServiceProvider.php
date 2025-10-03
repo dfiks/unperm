@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace DFiks\UnPerm;
 
+use DFiks\UnPerm\Console\AnalyzeBitmaskCommand;
+use DFiks\UnPerm\Console\GenerateIdeHelperCommand;
 use DFiks\UnPerm\Console\RebuildBitmaskCommand;
 use DFiks\UnPerm\Console\SyncActionsCommand;
+use DFiks\UnPerm\Console\SyncGroupsCommand;
+use DFiks\UnPerm\Console\SyncPermissionsCommand;
+use DFiks\UnPerm\Console\SyncRolesCommand;
+use DFiks\UnPerm\Middleware\CheckResourcePermission;
 use DFiks\UnPerm\Services\PermissionChecker;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +31,7 @@ class UnPermServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Публикация конфигурации
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/unperm.php' => config_path('unperm.php'),
@@ -33,25 +40,47 @@ class UnPermServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'unperm-migrations');
+            
+            $this->publishes([
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/unperm'),
+            ], 'unperm-views');
 
             $this->commands([
                 SyncActionsCommand::class,
-                Console\SyncRolesCommand::class,
-                Console\SyncGroupsCommand::class,
-                Console\SyncPermissionsCommand::class,
+                SyncRolesCommand::class,
+                SyncGroupsCommand::class,
+                SyncPermissionsCommand::class,
                 RebuildBitmaskCommand::class,
-                Console\GenerateIdeHelperCommand::class,
-                Console\AnalyzeBitmaskCommand::class,
+                GenerateIdeHelperCommand::class,
+                AnalyzeBitmaskCommand::class,
             ]);
         }
 
+        // Загрузка views
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'unperm');
+
+        // Загрузка routes
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+
+        // Загрузка миграций
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        // Регистрация Livewire компонентов
+        if (class_exists(\Livewire\Livewire::class)) {
+            \Livewire\Livewire::component('unperm::manage-actions', \DFiks\UnPerm\Http\Livewire\ManageActions::class);
+            \Livewire\Livewire::component('unperm::manage-roles', \DFiks\UnPerm\Http\Livewire\ManageRoles::class);
+            \Livewire\Livewire::component('unperm::manage-groups', \DFiks\UnPerm\Http\Livewire\ManageGroups::class);
+        }
+
+        // Регистрация middleware
+        if (method_exists($this->app, 'make')) {
+            $router = $this->app->make('router');
+            $router->aliasMiddleware('unperm', CheckResourcePermission::class);
+        }
     }
 
     public function provides(): array
     {
-        return [
-            'unperm',
-        ];
+        return ['unperm'];
     }
 }

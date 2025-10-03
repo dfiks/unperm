@@ -13,7 +13,7 @@ class TestCase extends Orchestra
 
         // Загружаем основные миграции пакета
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        
+
         // Загружаем тестовые миграции (например, users таблица)
         $this->loadMigrationsFrom(__DIR__ . '/database/migrations');
 
