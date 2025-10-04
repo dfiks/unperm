@@ -28,7 +28,7 @@ class PermissionGateSuperAdminTest extends TestCase
         ]);
 
         // Определяем правило которое всегда возвращает false
-        PermissionGate::define('impossible-action', fn() => false);
+        PermissionGate::define('impossible-action', fn () => false);
 
         // Суперадмин должен пройти проверку
         $this->assertTrue(PermissionGate::check('impossible-action', null, $user));
@@ -45,7 +45,7 @@ class PermissionGateSuperAdminTest extends TestCase
             'email' => 'normal@example.com',
         ]);
 
-        PermissionGate::define('impossible-action', fn() => false);
+        PermissionGate::define('impossible-action', fn () => false);
 
         $this->assertFalse(PermissionGate::check('impossible-action', null, $user));
         $this->assertFalse(PermissionGate::isSuperAdmin($user));
@@ -110,4 +110,3 @@ class PermissionGateSuperAdminTest extends TestCase
         $this->assertTrue(PermissionGate::isSuperAdmin($folder));
     }
 }
-

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace DFiks\UnPerm\Traits;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -36,7 +35,7 @@ trait AuthorizesPermissions
     public function __construct()
     {
         $this->registerPermissionRules();
-        
+
         // Вызываем родительский конструктор если есть
         if (method_exists(get_parent_class($this), '__construct')) {
             parent::__construct();
@@ -52,7 +51,7 @@ trait AuthorizesPermissions
 
         foreach ($rules as $action => $rule) {
             $abilityName = $this->makeAbilityName($action);
-            
+
             // Регистрируем middleware для этого action
             $this->middleware(function ($request, $next) use ($abilityName, $action) {
                 // Получаем параметры из роута
@@ -116,4 +115,3 @@ trait AuthorizesPermissions
         return app('unperm.gate')->canAll($abilities, $arguments);
     }
 }
-

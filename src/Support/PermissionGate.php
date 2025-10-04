@@ -21,12 +21,13 @@ class PermissionGate
     public function __construct()
     {
         $this->superAdminChecker = new SuperAdminChecker();
-        
+
         // Регистрируем проверку суперадминов как before callback
         $this->before(function ($user, $ability, $arguments) {
             if ($this->superAdminChecker->check($user)) {
                 return true;
             }
+
             return null;
         });
     }
@@ -34,7 +35,7 @@ class PermissionGate
     /**
      * Определить правило доступа.
      *
-     * @param string $ability Название способности (например, 'view-users', 'edit-post')
+     * @param string               $ability  Название способности (например, 'view-users', 'edit-post')
      * @param Closure|array|string $callback Правило проверки
      */
     public function define(string $ability, Closure|array|string $callback): void
@@ -45,10 +46,10 @@ class PermissionGate
     /**
      * Проверить право доступа.
      *
-     * @param string $ability Название способности
-     * @param mixed $arguments Аргументы для проверки (обычно модель)
-     * @param Model|null $user Пользователь (если null - текущий)
-     * @param bool $fluent Вернуть PermissionResult вместо bool
+     * @param  string                $ability   Название способности
+     * @param  mixed                 $arguments Аргументы для проверки (обычно модель)
+     * @param  Model|null            $user      Пользователь (если null - текущий)
+     * @param  bool                  $fluent    Вернуть PermissionResult вместо bool
      * @return bool|PermissionResult
      */
     public function check(string $ability, mixed $arguments = null, ?Model $user = null, bool $fluent = false): bool|PermissionResult
@@ -64,6 +65,7 @@ class PermissionGate
             $result = $callback($user, $ability, $arguments);
             if ($result !== null) {
                 $boolResult = (bool) $result;
+
                 return $fluent ? PermissionResult::make($boolResult, $ability, $arguments) : $boolResult;
             }
         }
@@ -90,9 +92,9 @@ class PermissionGate
     /**
      * Проверить право доступа с fluent API.
      *
-     * @param string $ability Название способности
-     * @param mixed $arguments Аргументы для проверки
-     * @param Model|null $user Пользователь
+     * @param  string           $ability   Название способности
+     * @param  mixed            $arguments Аргументы для проверки
+     * @param  Model|null       $user      Пользователь
      * @return PermissionResult
      */
     public function can(string $ability, mixed $arguments = null, ?Model $user = null): PermissionResult
@@ -132,9 +134,9 @@ class PermissionGate
         // ['users.view'] - хотя бы один action
         // ['require_all' => ['users.view', 'users.edit']] - все actions
         // ['require_any' => ['users.view', 'posts.view']] - хотя бы один
-        
+
         if (isset($actions['require_all'])) {
-            return method_exists($user, 'hasAllActions') 
+            return method_exists($user, 'hasAllActions')
                 ? $user->hasAllActions($actions['require_all'])
                 : false;
         }
@@ -165,6 +167,7 @@ class PermissionGate
             // Извлекаем action name из полного ability
             // Например: 'view-folder' -> 'view'
             $actionName = $this->extractActionName($action);
+
             return $arguments->userCan($user, $actionName);
         }
 
@@ -301,5 +304,3 @@ class PermissionGate
         return $this->superAdminChecker->getReason($user);
     }
 }
-
-

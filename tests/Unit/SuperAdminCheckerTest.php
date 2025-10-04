@@ -36,7 +36,7 @@ class SuperAdminCheckerTest extends TestCase
     {
         config(['unperm.superadmins.enabled' => true]);
         config(['unperm.superadmins.models' => []]);
-        
+
         $user = User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -106,7 +106,7 @@ class SuperAdminCheckerTest extends TestCase
         config(['unperm.superadmins.models' => []]);
         config(['unperm.superadmins.ids' => []]);
         config(['unperm.superadmins.emails' => []]);
-        config(['unperm.superadmins.callback' => fn($user) => $user->email === 'callback@example.com']);
+        config(['unperm.superadmins.callback' => fn ($user) => $user->email === 'callback@example.com']);
 
         $user = User::create([
             'name' => 'Callback User',
@@ -143,10 +143,9 @@ class SuperAdminCheckerTest extends TestCase
         ]);
 
         $this->assertTrue($this->checker->check($user));
-        
+
         // Должно проверяться по модели первым (более высокий приоритет)
         $reason = $this->checker->getReason($user);
         $this->assertStringContainsString('Модель', $reason);
     }
 }
-

@@ -1,6 +1,5 @@
 <?php
 
-use DFiks\UnPerm\Support\PermissionGate;
 use Illuminate\Database\Eloquent\Model;
 
 if (!function_exists('can_permission')) {
@@ -52,4 +51,3 @@ if (!function_exists('is_superadmin')) {
         return app('unperm.gate')->isSuperAdmin($user);
     }
 }
-

@@ -83,7 +83,7 @@ class ResourcePermission
 
         // Создаем или получаем ResourceAction
         $resourceAction = ResourceAction::findOrCreateForResource($resource, $action);
-        
+
         // Если action только что создан, обновляем bitmask
         if ($resourceAction->wasRecentlyCreated) {
             PermBit::rebuild();
@@ -92,8 +92,10 @@ class ResourcePermission
 
         $user->assignAction($resourceAction);
 
-        // Перезагружаем связь actions чтобы изменения были видны сразу
-        $user->load('actions');
+        // Перезагружаем связи чтобы изменения были видны сразу
+        if (method_exists($user, 'resourceActions')) {
+            $user->load('resourceActions');
+        }
     }
 
     /**
@@ -116,8 +118,10 @@ class ResourcePermission
 
         if ($resourceAction) {
             $user->removeAction($resourceAction);
-            // Перезагружаем связь actions чтобы изменения были видны сразу
-            $user->load('actions');
+            // Перезагружаем связи чтобы изменения были видны сразу
+            if (method_exists($user, 'resourceActions')) {
+                $user->load('resourceActions');
+            }
         }
     }
 
@@ -155,9 +159,11 @@ class ResourcePermission
         foreach ($resourceActions as $action) {
             $user->removeAction($action);
         }
-        
-        // Перезагружаем связь actions чтобы изменения были видны сразу
-        $user->load('actions');
+
+        // Перезагружаем связи чтобы изменения были видны сразу
+        if (method_exists($user, 'resourceActions')) {
+            $user->load('resourceActions');
+        }
     }
 
     /**
@@ -202,19 +208,24 @@ class ResourcePermission
             return collect([]);
         }
 
-        // Получаем пользователей через полиморфную связь
-        return DB::table('model_actions')
-            ->where('action_id', $resourceAction->id)
+        // Получаем ID пользователей из pivot таблицы
+        $userIds = \DB::table('model_resource_actions')
+            ->where('resource_action_id', $resourceAction->id)
             ->where('model_type', $userModelClass)
-            ->pluck('model_id')
-            ->map(fn ($id) => $userModelClass::find($id))
-            ->filter();
+            ->pluck('model_id');
+
+        if ($userIds->isEmpty()) {
+            return collect([]);
+        }
+
+        // Загружаем сами модели пользователей
+        return $userModelClass::whereIn('id', $userIds)->get();
     }
-    
+
     /**
      * Получить все resource actions для конкретного ресурса.
      *
-     * @param Model $resource
+     * @param  Model                                    $resource
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public static function getResourceActions(Model $resource): \Illuminate\Database\Eloquent\Collection

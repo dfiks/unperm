@@ -100,11 +100,27 @@ trait HasResourcePermissions
                     return true;
                 }
             }
-            return false;
         }
 
-        // Иначе делаем запрос к БД
-        return $user->actions()->where('slug', $slug)->exists();
+        // Проверяем в загруженных resourceActions (eager loaded)
+        if ($user->relationLoaded('resourceActions')) {
+            foreach ($user->resourceActions as $action) {
+                if ($action->slug === $slug) {
+                    return true;
+                }
+            }
+        }
+
+        // Проверяем в обеих таблицах через БД
+        if ($user->actions()->where('slug', $slug)->exists()) {
+            return true;
+        }
+
+        if (method_exists($user, 'resourceActions') && $user->resourceActions()->where('slug', $slug)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -133,7 +149,17 @@ trait HasResourcePermissions
         // Иначе фильтруем только те записи, на которые есть точечные права
         $userActions = $user->actions()
             ->where('slug', 'like', "{$resourceKey}.{$action}.%")
-            ->pluck('slug')
+            ->pluck('slug');
+
+        // Также проверяем resourceActions если метод существует
+        if (method_exists($user, 'resourceActions')) {
+            $resourceUserActions = $user->resourceActions()
+                ->where('slug', 'like', "{$resourceKey}.{$action}.%")
+                ->pluck('slug');
+            $userActions = $userActions->merge($resourceUserActions);
+        }
+
+        $userActions = $userActions
             ->map(function ($slug) use ($resourceKey, $action) {
                 // Извлекаем ID из slug: "folders.view.uuid-123" -> "uuid-123"
                 $prefix = "{$resourceKey}.{$action}.";

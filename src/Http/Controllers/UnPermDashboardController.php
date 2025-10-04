@@ -7,7 +7,6 @@ namespace DFiks\UnPerm\Http\Controllers;
 use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Models\Group;
 use DFiks\UnPerm\Models\Role;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class UnPermDashboardController extends Controller
@@ -48,4 +47,3 @@ class UnPermDashboardController extends Controller
         return view('unperm::resources.index');
     }
 }
-

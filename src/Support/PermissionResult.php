@@ -122,6 +122,7 @@ class PermissionResult
     public function __toString(): string
     {
         $status = $this->allowed() ? 'ALLOWED' : 'DENIED';
+
         return "{$status}: {$this->ability}";
     }
 
@@ -133,4 +134,3 @@ class PermissionResult
         return new self($allowed, $ability, $arguments);
     }
 }
-

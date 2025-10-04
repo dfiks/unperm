@@ -8,6 +8,7 @@ use DFiks\UnPerm\Traits\HasBitmask;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Throwable;
 
 class ResourceAction extends Model
 {
@@ -28,49 +29,55 @@ class ResourceAction extends Model
         return $this->morphedByMany(
             config('unperm.user_model', 'App\\Models\\User'),
             'model',
-            'model_actions',
-            'action_id',
-            'model_id',
-            'id',
-            'id'
-        );
+            'model_resource_actions',
+            'resource_action_id',
+            'model_id'
+        )->withTimestamps();
     }
-    
+
     public function allUsers()
     {
-        // Получаем всех пользователей из всех моделей
-        $usersByModel = [];
-        
-        $pivotData = \DB::table('model_actions')
-            ->where('action_id', $this->id)
-            ->get();
-            
-        foreach ($pivotData as $pivot) {
+        // Получаем все pivot записи через саму связь
+        // Используем newPivot() для доступа к pivot данным
+        $connection = $this->getConnection();
+        $pivots = $this->users()
+            ->newPivotStatement()
+            ->where('resource_action_id', $this->id)
+            ->get(['model_type', 'model_id']);
+
+        // Гидратируем модели пользователей из разных классов
+        return $pivots->map(function ($pivot) {
             if (class_exists($pivot->model_type)) {
                 try {
-                    $user = $pivot->model_type::find($pivot->model_id);
-                    if ($user) {
-                        $usersByModel[] = $user;
-                    }
-                } catch (\Throwable $e) {
-                    continue;
+                    return $pivot->model_type::find($pivot->model_id);
+                } catch (Throwable $e) {
+                    return null;
                 }
             }
-        }
-        
-        return collect($usersByModel);
+
+            return null;
+        })->filter();
     }
 
     public static function findOrCreateForResource($resource, string $actionType): self
     {
         $resourceType = get_class($resource);
         $resourceId = $resource->getKey();
-        $slug = sprintf(
-            '%s:%s:%s',
-            class_basename($resourceType),
-            $resourceId,
-            $actionType
-        );
+        
+        // Используем метод getResourcePermissionSlug если доступен
+        if (method_exists($resource, 'getResourcePermissionSlug')) {
+            $slug = $resource->getResourcePermissionSlug($actionType);
+        } else {
+            // Иначе создаём slug в стандартном формате
+            $slug = sprintf(
+                '%s.%s.%s',
+                method_exists($resource, 'getResourcePermissionKey') 
+                    ? $resource->getResourcePermissionKey() 
+                    : $resource->getTable(),
+                $actionType,
+                $resourceId
+            );
+        }
 
         return static::firstOrCreate(
             [
@@ -97,4 +104,3 @@ class ResourceAction extends Model
         return class_basename($this->resource_type);
     }
 }
-

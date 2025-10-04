@@ -46,14 +46,10 @@ class ManageActions extends Component
                             ->orderBy('created_at', 'desc')
                             ->limit(20)
                             ->get();
-                        
-                        // Добавляем количество пользователей для каждого resource action
-                        $resourceActions->each(function ($ra) {
-                            $ra->usersCount = \DB::table('model_actions')
-                                ->where('action_id', $ra->id)
-                                ->count();
-                        });
-                        
+
+                        // Загружаем количество пользователей одним запросом через withCount
+                        $resourceActions->loadCount('users as usersCount');
+
                         $resourceActionsMap[$actionId] = $resourceActions;
                     }
                 }
@@ -65,7 +61,7 @@ class ManageActions extends Component
             'resourceActionsMap' => $resourceActionsMap,
         ]);
     }
-    
+
     public function toggleExpand($actionId)
     {
         if (isset($this->expandedActions[$actionId])) {
@@ -136,4 +132,3 @@ class ManageActions extends Component
         $this->description = '';
     }
 }
-

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DFiks\UnPerm\Support;
 
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 /**
  * Проверка суперадминистраторов.
@@ -151,7 +152,7 @@ class SuperAdminChecker
 
         try {
             return (bool) $user->{$method}();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -173,7 +174,7 @@ class SuperAdminChecker
 
         try {
             return $user->hasAction($action);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -191,7 +192,7 @@ class SuperAdminChecker
 
         try {
             return (bool) $callback($user);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -225,6 +226,7 @@ class SuperAdminChecker
 
         if ($this->checkByMethod($user, $config)) {
             $method = $config['check_method'];
+
             return "Метод {$method}() вернул true";
         }
 
@@ -239,4 +241,3 @@ class SuperAdminChecker
         return null;
     }
 }
-

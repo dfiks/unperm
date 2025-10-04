@@ -36,7 +36,7 @@ class ListModelsCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info("Найдено моделей: " . count($models));
+        $this->info('Найдено моделей: ' . count($models));
         $this->newLine();
 
         $data = [];
@@ -59,10 +59,9 @@ class ListModelsCommand extends Command
         foreach ($models as $model) {
             $this->line("      {$model['class']}::class,");
         }
-        $this->line("  ],");
+        $this->line('  ],');
         $this->newLine();
 
         return self::SUCCESS;
     }
 }
-

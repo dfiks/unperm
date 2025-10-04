@@ -9,6 +9,7 @@ use DFiks\UnPerm\Traits\HasResourcePermissions;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use ReflectionClass;
+use Throwable;
 
 /**
  * Сервис для автоматического обнаружения моделей с HasPermissions trait.
@@ -115,7 +116,7 @@ class ModelDiscovery
 
             foreach ($classMap as $className => $filePath) {
                 // Пропускаем vendor классы и тестовые классы
-                if (str_contains($className, 'vendor\\') || 
+                if (str_contains($className, 'vendor\\') ||
                     str_contains($className, 'Test') ||
                     str_contains($filePath, '/vendor/') ||
                     str_contains($filePath, '/tests/')) {
@@ -131,7 +132,7 @@ class ModelDiscovery
                     $models[$className] = $model;
                 }
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Игнорируем ошибки
         }
 
@@ -159,7 +160,7 @@ class ModelDiscovery
             // Создаем экземпляр БЕЗ запросов к БД
             // Используем newInstanceWithoutConstructor чтобы избежать вызова конструктора
             $instance = $reflection->newInstanceWithoutConstructor();
-            
+
             // Получаем имя таблицы безопасным способом
             $table = $this->getTableName($className, $reflection);
 
@@ -168,7 +169,7 @@ class ModelDiscovery
                 'name' => class_basename($className),
                 'table' => $table,
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Игнорируем ошибки при инстанцировании
             return null;
         }
@@ -195,10 +196,11 @@ class ModelDiscovery
 
             // Иначе генерируем стандартное имя таблицы Laravel
             $className = class_basename($className);
-            return \Illuminate\Support\Str::snake(\Illuminate\Support\Str::pluralStudly($className));
-        } catch (\Throwable $e) {
+
+            return Str::snake(Str::pluralStudly($className));
+        } catch (Throwable $e) {
             // Возвращаем имя класса в snake_case как fallback
-            return \Illuminate\Support\Str::snake(class_basename($className));
+            return Str::snake(class_basename($className));
         }
     }
 
@@ -307,6 +309,7 @@ class ModelDiscovery
         $models = array_merge($models, $composerModels);
 
         $this->resourceCache = $models;
+
         return $models;
     }
 
@@ -399,9 +402,8 @@ class ModelDiscovery
                 'table' => $table,
                 'resource_key' => $resourceKey,
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
 }
-

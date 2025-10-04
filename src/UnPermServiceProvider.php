@@ -29,7 +29,7 @@ class UnPermServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton('unperm.gate', function ($app) {
-            return new \DFiks\UnPerm\Support\PermissionGate();
+            return new Support\PermissionGate();
         });
 
         // Загружаем helpers
@@ -49,7 +49,7 @@ class UnPermServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'unperm-migrations');
-            
+
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/unperm'),
             ], 'unperm-views');
@@ -77,11 +77,11 @@ class UnPermServiceProvider extends ServiceProvider
 
         // Регистрация Livewire компонентов
         if (class_exists(\Livewire\Livewire::class)) {
-            \Livewire\Livewire::component('unperm::manage-actions', \DFiks\UnPerm\Http\Livewire\ManageActions::class);
-            \Livewire\Livewire::component('unperm::manage-roles', \DFiks\UnPerm\Http\Livewire\ManageRoles::class);
-            \Livewire\Livewire::component('unperm::manage-groups', \DFiks\UnPerm\Http\Livewire\ManageGroups::class);
-            \Livewire\Livewire::component('unperm::manage-user-permissions', \DFiks\UnPerm\Http\Livewire\ManageUserPermissions::class);
-            \Livewire\Livewire::component('unperm::manage-resource-permissions', \DFiks\UnPerm\Http\Livewire\ManageResourcePermissions::class);
+            \Livewire\Livewire::component('unperm::manage-actions', Http\Livewire\ManageActions::class);
+            \Livewire\Livewire::component('unperm::manage-roles', Http\Livewire\ManageRoles::class);
+            \Livewire\Livewire::component('unperm::manage-groups', Http\Livewire\ManageGroups::class);
+            \Livewire\Livewire::component('unperm::manage-user-permissions', Http\Livewire\ManageUserPermissions::class);
+            \Livewire\Livewire::component('unperm::manage-resource-permissions', Http\Livewire\ManageResourcePermissions::class);
         }
 
         // Регистрация middleware

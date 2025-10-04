@@ -23,6 +23,17 @@ trait HasPermissions
         )->withTimestamps();
     }
 
+    public function resourceActions(): MorphToMany
+    {
+        return $this->morphToMany(
+            ResourceAction::class,
+            'model',
+            'model_resource_actions',
+            'model_id',
+            'resource_action_id'
+        )->withTimestamps();
+    }
+
     public function roles(): MorphToMany
     {
         return $this->morphToMany(
@@ -51,25 +62,19 @@ trait HasPermissions
             $action = Action::where('slug', $action)->firstOrFail();
         }
 
-        // Поддержка как Action, так и ResourceAction
-        $actionId = $action->id;
-        
-        // Проверяем существование через прямой запрос в таблицу
-        $exists = \DB::table('model_actions')
-            ->where('model_type', get_class($this))
-            ->where('model_id', $this->getKey())
-            ->where('action_id', $actionId)
-            ->exists();
-
-        if (!$exists) {
-            \DB::table('model_actions')->insert([
-                'model_type' => get_class($this),
-                'model_id' => $this->getKey(),
-                'action_id' => $actionId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $this->clearPermissionCache();
+        // Проверяем тип action и используем соответствующую связь
+        if ($action instanceof ResourceAction) {
+            // Для ResourceAction используем отдельную связь
+            if (!$this->resourceActions()->where('resource_actions.id', $action->id)->exists()) {
+                $this->resourceActions()->attach($action->id);
+                $this->clearPermissionCache();
+            }
+        } else {
+            // Для обычного Action используем стандартную связь
+            if (!$this->actions()->where('actions.id', $action->id)->exists()) {
+                $this->actions()->attach($action->id);
+                $this->clearPermissionCache();
+            }
         }
 
         return $this;
@@ -90,13 +95,13 @@ trait HasPermissions
             $action = Action::where('slug', $action)->firstOrFail();
         }
 
-        // Поддержка как Action, так и ResourceAction
-        \DB::table('model_actions')
-            ->where('model_type', get_class($this))
-            ->where('model_id', $this->getKey())
-            ->where('action_id', $action->id)
-            ->delete();
-            
+        // Проверяем тип action и используем соответствующую связь
+        if ($action instanceof ResourceAction) {
+            $this->resourceActions()->detach($action->id);
+        } else {
+            $this->actions()->detach($action->id);
+        }
+
         $this->clearPermissionCache();
 
         return $this;

@@ -14,4 +14,3 @@ Route::prefix('unperm')
         Route::get('/users', [UnPermDashboardController::class, 'users'])->name('users');
         Route::get('/resources', [UnPermDashboardController::class, 'resources'])->name('resources');
     });
-
