@@ -42,7 +42,9 @@ class ManageActions extends Component
                 if ($isExpanded) {
                     $action = $actions->firstWhere('id', $actionId);
                     if ($action) {
-                        $resourceActions = ResourceAction::where('action_type', $action->slug)
+                        // Ищем ResourceAction, у которых slug начинается с префикса этого action
+                        // Например, для action "folders.view" ищем "folders.view.{uuid}"
+                        $resourceActions = ResourceAction::where('slug', 'like', $action->slug . '.%')
                             ->orderBy('created_at', 'desc')
                             ->limit(20)
                             ->get();
