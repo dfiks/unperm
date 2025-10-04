@@ -37,6 +37,16 @@ class Group extends Model
         )->withTimestamps();
     }
 
+    public function resourceActions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ResourceAction::class,
+            'groups_resource_actions',
+            'group_id',
+            'resource_action_id'
+        )->withTimestamps();
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(

@@ -64,6 +64,7 @@ class UnPermServiceProvider extends ServiceProvider
                 AnalyzeBitmaskCommand::class,
                 Console\ListModelsCommand::class,
                 Console\DiagnoseResourcePermissionsCommand::class,
+                Console\MigrateResourceActionSlugsCommand::class,
             ]);
         }
 

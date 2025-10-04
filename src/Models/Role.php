@@ -37,6 +37,16 @@ class Role extends Model
         )->withTimestamps();
     }
 
+    public function resourceActions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ResourceAction::class,
+            'roles_resource_actions',
+            'role_id',
+            'resource_action_id'
+        )->withTimestamps();
+    }
+
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(

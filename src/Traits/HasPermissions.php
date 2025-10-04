@@ -34,6 +34,43 @@ trait HasPermissions
         )->withTimestamps();
     }
 
+    /**
+     * Получить все ResourceActions пользователя включая из ролей и групп
+     */
+    public function getAllResourceActions()
+    {
+        $resourceActions = $this->resourceActions;
+        
+        // Добавляем ResourceActions из ролей
+        foreach ($this->roles as $role) {
+            if ($role->relationLoaded('resourceActions')) {
+                $resourceActions = $resourceActions->merge($role->resourceActions);
+            } else {
+                $resourceActions = $resourceActions->merge($role->resourceActions()->get());
+            }
+        }
+        
+        // Добавляем ResourceActions из групп
+        foreach ($this->groups as $group) {
+            if ($group->relationLoaded('resourceActions')) {
+                $resourceActions = $resourceActions->merge($group->resourceActions);
+            } else {
+                $resourceActions = $resourceActions->merge($group->resourceActions()->get());
+            }
+            
+            // Добавляем ResourceActions из ролей внутри групп
+            foreach ($group->roles as $groupRole) {
+                if ($groupRole->relationLoaded('resourceActions')) {
+                    $resourceActions = $resourceActions->merge($groupRole->resourceActions);
+                } else {
+                    $resourceActions = $resourceActions->merge($groupRole->resourceActions()->get());
+                }
+            }
+        }
+        
+        return $resourceActions->unique('id');
+    }
+
     public function roles(): MorphToMany
     {
         return $this->morphToMany(

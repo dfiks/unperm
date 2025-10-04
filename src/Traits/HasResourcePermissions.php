@@ -103,7 +103,15 @@ trait HasResourcePermissions
         }
 
         // Проверяем в загруженных resourceActions (eager loaded)
-        if ($user->relationLoaded('resourceActions')) {
+        // Используем getAllResourceActions для проверки в т.ч. ролей и групп
+        if (method_exists($user, 'getAllResourceActions')) {
+            $allResourceActions = $user->getAllResourceActions();
+            foreach ($allResourceActions as $action) {
+                if ($action->slug === $slug) {
+                    return true;
+                }
+            }
+        } elseif ($user->relationLoaded('resourceActions')) {
             foreach ($user->resourceActions as $action) {
                 if ($action->slug === $slug) {
                     return true;
@@ -118,6 +126,29 @@ trait HasResourcePermissions
 
         if (method_exists($user, 'resourceActions') && $user->resourceActions()->where('slug', $slug)->exists()) {
             return true;
+        }
+
+        // Проверяем в ролях и группах
+        if (method_exists($user, 'roles')) {
+            $user->load(['roles.resourceActions', 'groups.resourceActions', 'groups.roles.resourceActions']);
+            
+            foreach ($user->roles as $role) {
+                if ($role->resourceActions()->where('slug', $slug)->exists()) {
+                    return true;
+                }
+            }
+            
+            foreach ($user->groups as $group) {
+                if ($group->resourceActions()->where('slug', $slug)->exists()) {
+                    return true;
+                }
+                
+                foreach ($group->roles as $groupRole) {
+                    if ($groupRole->resourceActions()->where('slug', $slug)->exists()) {
+                        return true;
+                    }
+                }
+            }
         }
 
         return false;
