@@ -6,6 +6,7 @@ namespace DFiks\UnPerm\Traits;
 
 use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Models\Group;
+use DFiks\UnPerm\Models\ResourceAction;
 use DFiks\UnPerm\Models\Role;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
@@ -44,14 +45,30 @@ trait HasPermissions
         )->withTimestamps();
     }
 
-    public function assignAction(Action|string $action): self
+    public function assignAction(Action|ResourceAction|string $action): self
     {
         if (is_string($action)) {
             $action = Action::where('slug', $action)->firstOrFail();
         }
 
-        if (!$this->actions()->where('actions.id', $action->id)->exists()) {
-            $this->actions()->attach($action->id);
+        // Поддержка как Action, так и ResourceAction
+        $actionId = $action->id;
+        
+        // Проверяем существование через прямой запрос в таблицу
+        $exists = \DB::table('model_actions')
+            ->where('model_type', get_class($this))
+            ->where('model_id', $this->getKey())
+            ->where('action_id', $actionId)
+            ->exists();
+
+        if (!$exists) {
+            \DB::table('model_actions')->insert([
+                'model_type' => get_class($this),
+                'model_id' => $this->getKey(),
+                'action_id' => $actionId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
             $this->clearPermissionCache();
         }
 
@@ -67,13 +84,19 @@ trait HasPermissions
         return $this;
     }
 
-    public function removeAction(Action|string $action): self
+    public function removeAction(Action|ResourceAction|string $action): self
     {
         if (is_string($action)) {
             $action = Action::where('slug', $action)->firstOrFail();
         }
 
-        $this->actions()->detach($action->id);
+        // Поддержка как Action, так и ResourceAction
+        \DB::table('model_actions')
+            ->where('model_type', get_class($this))
+            ->where('model_id', $this->getKey())
+            ->where('action_id', $action->id)
+            ->delete();
+            
         $this->clearPermissionCache();
 
         return $this;
