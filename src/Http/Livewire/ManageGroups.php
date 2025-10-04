@@ -37,13 +37,13 @@ class ManageGroups extends Component
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $actions = Action::orderBy('name')->get();
-        $roles = Role::orderBy('name')->get();
+        $allActions = Action::orderBy('name')->get();
+        $allRoles = Role::orderBy('name')->get();
 
         return view('unperm::livewire.manage-groups', [
             'groups' => $groups,
-            'actions' => $actions,
-            'roles' => $roles,
+            'allActions' => $allActions,
+            'allRoles' => $allRoles,
         ]);
     }
 

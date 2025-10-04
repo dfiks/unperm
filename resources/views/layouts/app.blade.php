@@ -33,11 +33,11 @@
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f7;
         }
 
-        .sidebar-gradient {
-            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        .sidebar-purple {
+            background: #7c3aed;
         }
 
         .transition-smooth {
@@ -50,13 +50,16 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        .nav-item-active {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+        .nav-item {
+            position: relative;
         }
 
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .nav-item-active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-item:hover:not(.nav-item-active) {
+            background: rgba(255, 255, 255, 0.08);
         }
     </style>
 </head>
@@ -65,60 +68,74 @@
         <div class="max-w-[2200px] mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden" style="height: calc(100vh - 48px);">
             <div class="flex h-full gap-6 p-6">
                 <!-- Sidebar -->
-                <aside class="w-72 sidebar-gradient text-white flex-shrink-0 rounded-2xl flex flex-col shadow-xl">
-                    <div class="p-8">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur">
-                                <i class="fas fa-shield-alt text-white text-lg"></i>
+                <aside class="w-64 sidebar-purple text-white flex-shrink-0 rounded-2xl flex flex-col shadow-xl">
+                    <div class="px-4 py-5 border-b border-white border-opacity-10">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-white text-sm"></i>
                             </div>
                             <div>
-                                <h1 class="text-2xl font-bold tracking-tight">UnPerm</h1>
-                                <p class="text-purple-200 text-xs font-medium">Permission Manager</p>
+                                <h1 class="text-lg font-bold tracking-tight">UnPerm</h1>
+                                <p class="text-purple-200 text-xs">Permission Manager</p>
                             </div>
                         </div>
                     </div>
                     
-                    <nav class="flex-1 px-4 space-y-1">
-                        <a href="{{ route('unperm.dashboard') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.dashboard') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-home w-5 text-base"></i>
-                            <span class="ml-3">Dashboard</span>
+                    <div class="px-3 py-2 text-xs font-semibold text-purple-200 uppercase tracking-wider mt-3">
+                        Main Menu
+                    </div>
+                    
+                    <nav class="flex-1 px-2.5 space-y-0.5">
+                        <a href="{{ route('unperm.dashboard') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.dashboard') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-home w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Dashboard</span>
                         </a>
-                        <a href="{{ route('unperm.actions') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.actions') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-bolt w-5 text-base"></i>
-                            <span class="ml-3">Actions</span>
+                        <a href="{{ route('unperm.actions') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.actions') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-bolt w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Actions</span>
                         </a>
-                        <a href="{{ route('unperm.roles') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.roles') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-user-tag w-5 text-base"></i>
-                            <span class="ml-3">Roles</span>
+                        <a href="{{ route('unperm.roles') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.roles') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-user-tag w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Roles</span>
                         </a>
-                        <a href="{{ route('unperm.groups') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.groups') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-users w-5 text-base"></i>
-                            <span class="ml-3">Groups</span>
+                        <a href="{{ route('unperm.groups') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.groups') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-users w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Groups</span>
                         </a>
-                        <a href="{{ route('unperm.users') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.users') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-user-shield w-5 text-base"></i>
-                            <span class="ml-3">Users</span>
+                        <a href="{{ route('unperm.users') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.users') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-user-shield w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Users</span>
                         </a>
-                        <a href="{{ route('unperm.resources') }}" class="flex items-center px-4 py-3.5 rounded-xl transition-smooth nav-item {{ request()->routeIs('unperm.resources') ? 'nav-item-active font-semibold' : 'font-medium opacity-90' }}">
-                            <i class="fas fa-folder-open w-5 text-base"></i>
-                            <span class="ml-3">Resources</span>
+                        <a href="{{ route('unperm.resources') }}" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item {{ request()->routeIs('unperm.resources') ? 'nav-item-active' : '' }}">
+                            <i class="fas fa-folder-open w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Resources</span>
                         </a>
                     </nav>
                     
-                    <div class="p-6 mt-auto">
-                        <div class="bg-white bg-opacity-10 backdrop-blur rounded-xl p-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-bold">A</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold">Admin</p>
-                                    <p class="text-xs text-purple-200">admin@example.com</p>
-                                </div>
+                    <div class="px-3 py-2 text-xs font-semibold text-purple-200 uppercase tracking-wider border-t border-white border-opacity-10 mt-2">
+                        Account
+                    </div>
+                    
+                    <nav class="px-2.5 pb-3 space-y-0.5">
+                        <a href="#" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item">
+                            <i class="fas fa-cog w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Settings</span>
+                        </a>
+                        <a href="#" class="flex items-center px-3 py-2 rounded-lg transition-smooth nav-item">
+                            <i class="fas fa-bell w-4 text-sm"></i>
+                            <span class="ml-2.5 text-sm font-medium">Notifications</span>
+                        </a>
+                    </nav>
+                    
+                    <div class="p-3 mt-auto border-t border-white border-opacity-10">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-xs font-bold">A</span>
                             </div>
-                        </div>
-                        <div class="mt-4 text-xs text-purple-200 text-center opacity-75">
-                            <p>Version 1.0.0 © 2025 DFiks</p>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold truncate">Admin</p>
+                                <p class="text-xs text-purple-200 truncate">admin@example.com</p>
+                            </div>
                         </div>
                     </div>
                 </aside>

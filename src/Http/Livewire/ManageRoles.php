@@ -35,11 +35,11 @@ class ManageRoles extends Component
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $actions = Action::orderBy('name')->get();
+        $allActions = Action::orderBy('name')->get();
 
         return view('unperm::livewire.manage-roles', [
             'roles' => $roles,
-            'actions' => $actions,
+            'allActions' => $allActions,
         ]);
     }
 
