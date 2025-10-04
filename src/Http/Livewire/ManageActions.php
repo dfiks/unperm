@@ -64,7 +64,7 @@ class ManageActions extends Component
         // Группируем по resource_type и action_type
         $orphanedResourceActions = ResourceAction::selectRaw('resource_type, action_type, COUNT(*) as count, MAX(created_at) as latest')
             ->groupBy('resource_type', 'action_type')
-            ->having('count', '>', 0)
+            ->havingRaw('COUNT(*) > 0')
             ->get()
             ->filter(function ($group) use ($actions) {
                 // Проверяем, есть ли глобальный action для этой группы
