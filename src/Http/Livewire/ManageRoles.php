@@ -233,11 +233,11 @@ class ManageRoles extends Component
     protected function getAvailableResourceTypes(): array
     {
         $modelDiscovery = app(ModelDiscovery::class);
-        $models = $modelDiscovery->getModelsWithTrait('DFiks\\UnPerm\\Traits\\HasResourcePermissions');
+        $models = $modelDiscovery->findModelsWithResourcePermissions();
         
         $types = [];
-        foreach ($models as $model) {
-            $types[$model] = class_basename($model);
+        foreach ($models as $class => $info) {
+            $types[$class] = $info['name'];
         }
         
         return $types;

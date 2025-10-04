@@ -282,6 +282,76 @@ class ModelDiscovery
     }
 
     /**
+     * Универсальный метод для получения моделей с конкретным трейтом.
+     *
+     * @param string $traitName Полное имя трейта (например, 'DFiks\\UnPerm\\Traits\\HasResourcePermissions')
+     * @return array<string> Массив имен классов
+     */
+    public function getModelsWithTrait(string $traitName): array
+    {
+        // Специальные случаи для кешированных результатов
+        if ($traitName === HasResourcePermissions::class || $traitName === 'DFiks\\UnPerm\\Traits\\HasResourcePermissions') {
+            $models = $this->findModelsWithResourcePermissions();
+            return array_keys($models);
+        }
+
+        if ($traitName === HasPermissions::class || $traitName === 'DFiks\\UnPerm\\Traits\\HasPermissions') {
+            $models = $this->findModelsWithPermissions();
+            return array_keys($models);
+        }
+
+        // Общий поиск для любого трейта
+        return $this->findModelsWithCustomTrait($traitName);
+    }
+
+    /**
+     * Найти модели с произвольным трейтом.
+     */
+    protected function findModelsWithCustomTrait(string $traitName): array
+    {
+        $models = [];
+
+        $searchPaths = [
+            app_path('Models'),
+            app_path(),
+            base_path('app/Models'),
+        ];
+
+        foreach ($searchPaths as $path) {
+            if (File::exists($path)) {
+                $files = File::allFiles($path);
+
+                foreach ($files as $file) {
+                    if ($file->getExtension() !== 'php') {
+                        continue;
+                    }
+
+                    $className = $this->getClassNameFromFile($file->getPathname());
+                    if (!$className || !class_exists($className)) {
+                        continue;
+                    }
+
+                    try {
+                        $reflection = new ReflectionClass($className);
+
+                        if (!$reflection->isSubclassOf(\Illuminate\Database\Eloquent\Model::class)) {
+                            continue;
+                        }
+
+                        if ($this->usesTraitRecursive($reflection, $traitName)) {
+                            $models[] = $className;
+                        }
+                    } catch (Throwable $e) {
+                        // Игнорируем ошибки
+                    }
+                }
+            }
+        }
+
+        return $models;
+    }
+
+    /**
      * Найти все модели с HasResourcePermissions trait.
      */
     public function findModelsWithResourcePermissions(): array
