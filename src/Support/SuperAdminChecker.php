@@ -13,6 +13,14 @@ use Throwable;
 class SuperAdminChecker
 {
     /**
+     * Статический метод для быстрой проверки.
+     */
+    public static function isSuperAdmin(Model $user): bool
+    {
+        return (new static())->check($user);
+    }
+
+    /**
      * Проверить является ли пользователь суперадмином.
      */
     public function check(Model $user): bool
