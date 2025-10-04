@@ -50,6 +50,9 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button wire:click="manageResources('{{ $role->id }}')" class="text-purple-600 hover:text-purple-800 mr-4 transition-smooth" title="Manage Resource Permissions">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
                             <button wire:click="edit('{{ $role->id }}')" class="text-indigo-600 hover:text-indigo-800 mr-4 transition-smooth">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -58,6 +61,48 @@
                             </button>
                         </td>
                     </tr>
+                    
+                    @if($role->resourceActions->count() > 0)
+                        <tr class="bg-purple-50">
+                            <td colspan="5" class="px-6 py-4">
+                                <div class="ml-8">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                                        <i class="fas fa-folder text-purple-600 mr-2"></i>
+                                        Resource Permissions ({{ $role->resourceActions->count() }})
+                                    </h4>
+                                    <div class="space-y-2">
+                                        @foreach($role->resourceActions->take(5) as $resourceAction)
+                                            <div class="bg-white rounded-lg p-3 border border-purple-200 flex items-center justify-between">
+                                                <div>
+                                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono">
+                                                        {{ $resourceAction->getResourceClassName() }}
+                                                    </span>
+                                                    <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs ml-2">
+                                                        {{ $resourceAction->action_type }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 ml-2">
+                                                        #{{ Str::limit($resourceAction->resource_id, 8) }}
+                                                    </span>
+                                                </div>
+                                                <button 
+                                                    wire:click="removeResourcePermission('{{ $role->id }}', '{{ $resourceAction->id }}')"
+                                                    class="text-red-500 hover:text-red-700 text-xs"
+                                                    onclick="return confirm('Удалить это право?')"
+                                                >
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                        @if($role->resourceActions->count() > 5)
+                                            <div class="text-xs text-gray-500 text-center py-2">
+                                                И еще {{ $role->resourceActions->count() - 5 }} прав...
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr>
                         <td colspan="5" class="px-6 py-16 text-center">
@@ -128,6 +173,99 @@
                         </button>
                         <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-smooth font-semibold shadow-lg">
                             {{ $editingRoleId ? 'Обновить' : 'Создать' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Resource Permissions Modal -->
+    @if($showResourceModal)
+        <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-folder-open text-purple-600 mr-3"></i>
+                        Управление Resource Permissions
+                    </h3>
+                    <button wire:click="closeResourceModal" class="text-gray-400 hover:text-gray-600 transition-smooth">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="addResourcePermission" class="p-6">
+                    <div class="space-y-5">
+                        <!-- Resource Type -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Тип ресурса</label>
+                            <select wire:model="selectedResourceType" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
+                                <option value="">Выберите тип ресурса...</option>
+                                @foreach($availableResourceTypes as $class => $name)
+                                    <option value="{{ $class }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error('selectedResourceType') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        @if($selectedResourceType)
+                            <!-- Resource Search -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-search mr-1"></i>
+                                    Поиск ресурса
+                                </label>
+                                <input 
+                                    wire:model.debounce.300ms="resourceSearch" 
+                                    type="text" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth" 
+                                    placeholder="Введите название..."
+                                >
+                            </div>
+
+                            <!-- Resource Selection -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Конкретный ресурс</label>
+                                <select wire:model="selectedResourceId" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
+                                    <option value="">Выберите ресурс...</option>
+                                    @foreach($availableResources as $resource)
+                                        <option value="{{ $resource['id'] }}">{{ $resource['name'] }}</option>
+                                    @endforeach
+                                </select>
+                                @if(count($availableResources) === 0 && $selectedResourceType)
+                                    <p class="text-xs text-gray-500 mt-2">Загрузка ресурсов...</p>
+                                @endif
+                                @error('selectedResourceId') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <!-- Action Type -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Действие</label>
+                                <select wire:model="selectedResourceAction" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
+                                    <option value="view">View (Просмотр)</option>
+                                    <option value="create">Create (Создание)</option>
+                                    <option value="update">Update (Редактирование)</option>
+                                    <option value="delete">Delete (Удаление)</option>
+                                </select>
+                                @error('selectedResourceAction') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        @else
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                                <p class="text-sm text-blue-700">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    Сначала выберите тип ресурса
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                        <button type="button" wire:click="closeResourceModal" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-smooth font-semibold">
+                            Отмена
+                        </button>
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-semibold" @if(!$selectedResourceType || !$selectedResourceId) disabled @endif>
+                            <i class="fas fa-plus mr-2"></i>
+                            Добавить право
                         </button>
                     </div>
                 </form>
