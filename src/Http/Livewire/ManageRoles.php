@@ -11,6 +11,7 @@ use DFiks\UnPerm\Services\ModelDiscovery;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Exception;
 
 class ManageRoles extends Component
 {
@@ -25,7 +26,7 @@ class ManageRoles extends Component
     public $slug = '';
     public $description = '';
     public $selectedActions = [];
-    
+
     // Для ResourceActions
     public $selectedResourceType = '';
     public $selectedResourceId = '';
@@ -47,7 +48,7 @@ class ManageRoles extends Component
             ->paginate(20);
 
         $allActions = Action::orderBy('name')->get();
-        
+
         // Для модального окна ResourceActions
         $availableResourceTypes = [];
         if ($this->showResourceModal) {
@@ -125,36 +126,37 @@ class ManageRoles extends Component
         $this->description = '';
         $this->selectedActions = [];
     }
-    
+
     // ResourceActions Management
-    
+
     public function manageResources($roleId)
     {
         $this->managingResourcesForRoleId = $roleId;
         $this->showResourceModal = true;
         $this->resetResourceForm();
     }
-    
+
     public function updatedSelectedResourceType()
     {
         $this->loadAvailableResources();
     }
-    
+
     public function updatedResourceSearch()
     {
         $this->loadAvailableResources();
     }
-    
+
     protected function loadAvailableResources()
     {
         if (!$this->selectedResourceType || !class_exists($this->selectedResourceType)) {
             $this->availableResources = [];
+
             return;
         }
-        
+
         try {
             $query = $this->selectedResourceType::query();
-            
+
             // Добавляем поиск
             if ($this->resourceSearch) {
                 $query->where(function ($q) {
@@ -163,35 +165,35 @@ class ManageRoles extends Component
                     foreach ($searchFields as $field) {
                         try {
                             $q->orWhere($field, 'like', "%{$this->resourceSearch}%");
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             // Поле не существует, пропускаем
                         }
                     }
                 });
             }
-            
+
             $resources = $query->limit(50)->get();
-            
+
             $this->availableResources = $resources->map(function ($resource) {
                 // Пытаемся найти подходящее поле для отображения
-                $displayName = $resource->name 
-                    ?? $resource->title 
-                    ?? $resource->slug 
-                    ?? $resource->email 
+                $displayName = $resource->name
+                    ?? $resource->title
+                    ?? $resource->slug
+                    ?? $resource->email
                     ?? "#{$resource->id}";
-                
+
                 return [
                     'id' => $resource->id,
                     'name' => $displayName,
                 ];
             })->toArray();
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             $this->availableResources = [];
             session()->flash('error', 'Ошибка загрузки ресурсов: ' . $e->getMessage());
         }
     }
-    
+
     public function addResourcePermission()
     {
         $this->validate([
@@ -199,14 +201,14 @@ class ManageRoles extends Component
             'selectedResourceId' => 'required',
             'selectedResourceAction' => 'required',
         ]);
-        
+
         try {
             $role = Role::findOrFail($this->managingResourcesForRoleId);
             $resource = $this->selectedResourceType::findOrFail($this->selectedResourceId);
-            
+
             // Создаем или получаем ResourceAction
             $resourceAction = ResourceAction::findOrCreateForResource($resource, $this->selectedResourceAction);
-            
+
             // Назначаем роли
             if (!$role->resourceActions()->where('resource_action_id', $resourceAction->id)->exists()) {
                 $role->resourceActions()->attach($resourceAction->id);
@@ -214,30 +216,30 @@ class ManageRoles extends Component
             } else {
                 session()->flash('error', 'Это право уже назначено роли');
             }
-            
+
             $this->resetResourceForm();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             session()->flash('error', 'Ошибка: ' . $e->getMessage());
         }
     }
-    
+
     public function removeResourcePermission($roleId, $resourceActionId)
     {
         try {
             $role = Role::findOrFail($roleId);
             $role->resourceActions()->detach($resourceActionId);
             session()->flash('message', 'Resource permission удалено!');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             session()->flash('error', 'Ошибка: ' . $e->getMessage());
         }
     }
-    
+
     public function closeResourceModal()
     {
         $this->showResourceModal = false;
         $this->resetResourceForm();
     }
-    
+
     protected function resetResourceForm()
     {
         $this->selectedResourceType = '';
@@ -246,17 +248,17 @@ class ManageRoles extends Component
         $this->availableResources = [];
         $this->resourceSearch = '';
     }
-    
+
     protected function getAvailableResourceTypes(): array
     {
         $modelDiscovery = app(ModelDiscovery::class);
         $models = $modelDiscovery->findModelsWithResourcePermissions();
-        
+
         $types = [];
         foreach ($models as $class => $info) {
             $types[$class] = $info['name'];
         }
-        
+
         return $types;
     }
 }

@@ -7,6 +7,7 @@ namespace DFiks\UnPerm\Console;
 use DFiks\UnPerm\Models\ResourceAction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class DiagnoseResourcePermissionsCommand extends Command
 {
@@ -48,6 +49,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         if ($count === 0) {
             $this->warn('   ⚠️  No ResourceActions found! Create some by granting permissions on specific resources.');
+
             return;
         }
 
@@ -58,7 +60,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         $this->table(
             ['Resource Type', 'Action Type', 'Count'],
-            $byType->map(fn($item) => [
+            $byType->map(fn ($item) => [
                 class_basename($item->resource_type),
                 $item->action_type,
                 $item->count,
@@ -87,6 +89,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         if ($count === 0) {
             $this->warn('   ⚠️  No user-resource links found!');
+
             return;
         }
 
@@ -98,7 +101,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         $this->table(
             ['User Model Type', 'Links Count'],
-            $byModelType->map(fn($item) => [
+            $byModelType->map(fn ($item) => [
                 $item->model_type,
                 $item->count,
             ])->toArray()
@@ -116,34 +119,37 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         if (!class_exists($userClass)) {
             $this->error("   ❌ Class {$userClass} not found!");
+
             return;
         }
 
         $user = $userClass::find($userId);
         if (!$user) {
-            $this->error("   ❌ User not found!");
+            $this->error('   ❌ User not found!');
+
             return;
         }
 
-        $this->info("   User: " . ($user->name ?? $user->email ?? $userId));
+        $this->info('   User: ' . ($user->name ?? $user->email ?? $userId));
 
         // Проверяем трейты
         $traits = class_uses_recursive($user);
         $hasPermissionsTrait = in_array('DFiks\\UnPerm\\Traits\\HasPermissions', $traits);
-        
+
         if ($hasPermissionsTrait) {
             $this->info('   ✅ Uses HasPermissions trait');
         } else {
             $this->error('   ❌ Does NOT use HasPermissions trait!');
             $this->warn('   Add: use \\DFiks\\UnPerm\\Traits\\HasPermissions;');
+
             return;
         }
 
         // Загружаем связи
         $user->load(['actions', 'resourceActions']);
 
-        $this->info("   Global actions: " . $user->actions->count());
-        $this->info("   Resource actions: " . $user->resourceActions->count());
+        $this->info('   Global actions: ' . $user->actions->count());
+        $this->info('   Resource actions: ' . $user->resourceActions->count());
 
         if ($user->resourceActions->count() > 0) {
             $this->line('   <fg=yellow>User ResourceActions:</>');
@@ -164,6 +170,7 @@ class DiagnoseResourcePermissionsCommand extends Command
     {
         if (!class_exists($resourceClass)) {
             $this->error("   ❌ Resource class {$resourceClass} not found!");
+
             return;
         }
 
@@ -175,6 +182,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         if (!$hasResourcePermissions) {
             $this->error("   ❌ {$resourceClass} does NOT use HasResourcePermissions trait!");
+
             return;
         }
 
@@ -182,7 +190,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         // Пробуем получить доступные ресурсы
         $viewable = $resourceClass::viewableBy($user)->limit(10)->get();
-        $this->info("   Viewable resources: " . $viewable->count());
+        $this->info('   Viewable resources: ' . $viewable->count());
 
         if ($viewable->count() > 0) {
             foreach ($viewable as $resource) {
@@ -203,6 +211,7 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         if ($resourceGroups->isEmpty()) {
             $this->info('   No resource actions to check');
+
             return;
         }
 
@@ -246,19 +255,18 @@ class DiagnoseResourcePermissionsCommand extends Command
 
         try {
             $model = new $resourceType();
-            
+
             if (method_exists($model, 'getResourcePermissionKey')) {
                 return $model->getResourcePermissionKey();
             }
-            
+
             if (method_exists($model, 'getTable')) {
                 return $model->getTable();
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
 
         return strtolower(class_basename($resourceType));
     }
 }
-

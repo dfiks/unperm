@@ -61,7 +61,7 @@ if (PermissionGate::isSuperAdmin($user)) {
 }
 
 // Или через helper
-if (is_superadmin($user)) {
+if (isSuperadmin($user)) {
     // Полный доступ
 }
 
@@ -73,11 +73,11 @@ $reason = PermissionGate::getSuperAdminReason($user);
 ### В Blade
 
 ```blade
-@if(is_superadmin())
+@if(isSuperadmin())
     <div class="admin-panel">Панель администратора</div>
 @endif
 
-@if(is_superadmin($specificUser))
+@if(isSuperadmin($specificUser))
     <span class="badge">ADMIN</span>
 @endif
 ```

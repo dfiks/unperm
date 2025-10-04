@@ -10,6 +10,7 @@ use DFiks\UnPerm\Support\PermBit;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Exception;
 
 class ManageActions extends Component
 {
@@ -59,7 +60,7 @@ class ManageActions extends Component
                 }
             }
         }
-        
+
         // Также загружаем Resource Actions, для которых НЕТ глобального Action
         // Группируем по resource_type и action_type
         $orphanedResourceActions = ResourceAction::selectRaw('resource_type, action_type, COUNT(*) as count, MAX(created_at) as latest')
@@ -69,6 +70,7 @@ class ManageActions extends Component
             ->filter(function ($group) use ($actions) {
                 // Проверяем, есть ли глобальный action для этой группы
                 $expectedSlug = $this->getResourceKeyFromType($group->resource_type) . '.' . $group->action_type;
+
                 return !$actions->contains('slug', $expectedSlug);
             });
 
@@ -78,7 +80,7 @@ class ManageActions extends Component
             'orphanedResourceActions' => $orphanedResourceActions,
         ]);
     }
-    
+
     protected function getResourceKeyFromType(string $resourceType): string
     {
         // Пытаемся получить resource key из типа модели
@@ -91,37 +93,38 @@ class ManageActions extends Component
                 return $model->getTable();
             }
         }
-        
+
         return class_basename($resourceType);
     }
-    
+
     public function createGlobalActionFromGroup($resourceType, $actionType)
     {
         try {
             $resourceKey = $this->getResourceKeyFromType($resourceType);
             $slug = $resourceKey . '.' . $actionType;
-            
+
             // Проверяем что такого action еще нет
             if (Action::where('slug', $slug)->exists()) {
                 session()->flash('error', 'Global action уже существует: ' . $slug);
+
                 return;
             }
-            
+
             // Создаем глобальный action
             $name = ucfirst($actionType) . ' ' . ucfirst($resourceKey);
             $description = ucfirst($actionType) . ' permission for ' . $resourceKey;
-            
+
             Action::create([
                 'name' => $name,
                 'slug' => $slug,
                 'description' => $description,
                 'bitmask' => '0',
             ]);
-            
+
             PermBit::rebuild();
-            
+
             session()->flash('message', 'Global action создан: ' . $slug);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             session()->flash('error', 'Ошибка создания action: ' . $e->getMessage());
         }
     }

@@ -66,8 +66,8 @@ class PermissionGateSuperAdminTest extends TestCase
             'email' => 'normal@example.com',
         ]);
 
-        $this->assertTrue(is_superadmin($admin));
-        $this->assertFalse(is_superadmin($normal));
+        $this->assertTrue(isSuperadmin($admin));
+        $this->assertFalse(isSuperadmin($normal));
     }
 
     public function testSuperAdminReason(): void

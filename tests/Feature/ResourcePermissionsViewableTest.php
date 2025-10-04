@@ -33,7 +33,7 @@ class ResourcePermissionsViewableTest extends TestCase
         // Даем права пользователю John на первые две папки
         ResourcePermission::grant($user, $folder1, 'view');
         ResourcePermission::grant($user, $folder2, 'view');
-        
+
         // Даем права пользователю Jane на третью папку
         ResourcePermission::grant($otherUser, $folder3, 'view');
 
@@ -42,7 +42,7 @@ class ResourcePermissionsViewableTest extends TestCase
 
         // Проверяем что пользователь видит только свои папки через scope
         $viewableFolders = Folder::viewableBy($user)->get();
-        
+
         dump([
             'user' => $user->name,
             'total_folders' => Folder::count(),
@@ -53,8 +53,11 @@ class ResourcePermissionsViewableTest extends TestCase
             'user_resource_actions' => $user->resourceActions()->get(['id', 'slug'])->toArray(),
         ]);
 
-        $this->assertEquals(2, $viewableFolders->count(), 
-            'User should see exactly 2 folders they have access to');
+        $this->assertEquals(
+            2,
+            $viewableFolders->count(),
+            'User should see exactly 2 folders they have access to'
+        );
         $this->assertTrue($viewableFolders->contains($folder1));
         $this->assertTrue($viewableFolders->contains($folder2));
         $this->assertFalse($viewableFolders->contains($folder3));
@@ -69,10 +72,14 @@ class ResourcePermissionsViewableTest extends TestCase
         ResourcePermission::grant($user, $folder, 'view');
 
         // Проверяем что пользователь может просматривать папку
-        $this->assertTrue($folder->userCan($user, 'view'), 
-            'User should be able to view folder');
-        $this->assertFalse($folder->userCan($user, 'edit'), 
-            'User should NOT be able to edit folder');
+        $this->assertTrue(
+            $folder->userCan($user, 'view'),
+            'User should be able to view folder'
+        );
+        $this->assertFalse(
+            $folder->userCan($user, 'edit'),
+            'User should NOT be able to edit folder'
+        );
     }
 
     public function testResourceActionsAreFoundBySlugPattern(): void
@@ -93,13 +100,19 @@ class ResourcePermissionsViewableTest extends TestCase
 
         // Проверяем формат slug
         $expectedSlug = 'folders.view.' . $folder->id;
-        $this->assertEquals($expectedSlug, $resourceAction->slug,
-            "ResourceAction slug should be '{$expectedSlug}'");
+        $this->assertEquals(
+            $expectedSlug,
+            $resourceAction->slug,
+            "ResourceAction slug should be '{$expectedSlug}'"
+        );
 
         // Проверяем что можем найти по паттерну
         $foundByPattern = ResourceAction::where('slug', 'like', 'folders.view.%')->get();
-        $this->assertGreaterThan(0, $foundByPattern->count(),
-            'Should find ResourceActions by pattern folders.view.%');
+        $this->assertGreaterThan(
+            0,
+            $foundByPattern->count(),
+            'Should find ResourceActions by pattern folders.view.%'
+        );
         $this->assertTrue($foundByPattern->contains($resourceAction));
     }
 
@@ -122,7 +135,7 @@ class ResourcePermissionsViewableTest extends TestCase
 
         // Проверяем что можем найти resource actions под глобальным action
         $resourceActions = ResourceAction::where('slug', 'like', $globalAction->slug . '.%')->get();
-        
+
         dump([
             'global_action_slug' => $globalAction->slug,
             'pattern' => $globalAction->slug . '.%',
@@ -130,8 +143,10 @@ class ResourcePermissionsViewableTest extends TestCase
             'slugs' => $resourceActions->pluck('slug')->toArray(),
         ]);
 
-        $this->assertEquals(2, $resourceActions->count(),
-            'Should find 2 ResourceActions under global action');
+        $this->assertEquals(
+            2,
+            $resourceActions->count(),
+            'Should find 2 ResourceActions under global action'
+        );
     }
 }
-

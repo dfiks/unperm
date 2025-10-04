@@ -13,6 +13,7 @@ use DFiks\UnPerm\Console\SyncPermissionsCommand;
 use DFiks\UnPerm\Console\SyncRolesCommand;
 use DFiks\UnPerm\Middleware\CheckResourcePermission;
 use DFiks\UnPerm\Services\PermissionChecker;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class UnPermServiceProvider extends ServiceProvider
@@ -73,6 +74,16 @@ class UnPermServiceProvider extends ServiceProvider
 
         // Загрузка routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+
+        // Загрузка API routes
+        if (file_exists(__DIR__ . '/../routes/api.php')) {
+            Route::group([
+                'prefix' => 'api',
+                'middleware' => 'api',
+            ], function () {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+            });
+        }
 
         // Загрузка миграций
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');

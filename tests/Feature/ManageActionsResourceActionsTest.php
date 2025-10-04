@@ -37,12 +37,12 @@ class ManageActionsResourceActionsTest extends TestCase
             'resource_type' => Folder::class,
             'action_type' => 'view',
         ]);
-        
+
         // Проверяем что нет глобального action
         $this->assertDatabaseMissing('actions', [
             'slug' => 'folders.view',
         ]);
-        
+
         // Проверяем что можем найти orphaned resource actions
         $orphaned = ResourceAction::selectRaw('resource_type, action_type, COUNT(*) as count')
             ->groupBy('resource_type', 'action_type')
@@ -50,9 +50,10 @@ class ManageActionsResourceActionsTest extends TestCase
             ->get()
             ->filter(function ($group) {
                 $expectedSlug = 'folders.' . $group->action_type;
+
                 return !Action::where('slug', $expectedSlug)->exists();
             });
-        
+
         $this->assertTrue($orphaned->count() > 0, 'Should find orphaned resource actions');
     }
 
@@ -72,7 +73,7 @@ class ManageActionsResourceActionsTest extends TestCase
         $this->assertDatabaseHas('actions', [
             'slug' => 'folders.view',
         ]);
-        
+
         $this->assertNotNull($action);
         $this->assertEquals('folders.view', $action->slug);
     }
@@ -103,7 +104,7 @@ class ManageActionsResourceActionsTest extends TestCase
         // Проверяем что можем найти resource actions по паттерну глобального action
         $resourceActions = ResourceAction::where('slug', 'like', $action->slug . '.%')->get();
         $this->assertEquals(2, $resourceActions->count(), 'Should find 2 resource actions under global action');
-        
+
         // Проверяем что у каждого правильный slug
         foreach ($resourceActions as $ra) {
             $this->assertStringStartsWith('folders.view.', $ra->slug);
@@ -156,4 +157,3 @@ class ManageActionsResourceActionsTest extends TestCase
         $this->assertTrue($resourceActions->contains('action_type', 'delete'));
     }
 }
-

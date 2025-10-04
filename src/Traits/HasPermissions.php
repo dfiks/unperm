@@ -40,7 +40,7 @@ trait HasPermissions
     public function getAllResourceActions()
     {
         $resourceActions = $this->resourceActions;
-        
+
         // Добавляем ResourceActions из ролей
         foreach ($this->roles as $role) {
             if ($role->relationLoaded('resourceActions')) {
@@ -49,7 +49,7 @@ trait HasPermissions
                 $resourceActions = $resourceActions->merge($role->resourceActions()->get());
             }
         }
-        
+
         // Добавляем ResourceActions из групп
         foreach ($this->groups as $group) {
             if ($group->relationLoaded('resourceActions')) {
@@ -57,7 +57,7 @@ trait HasPermissions
             } else {
                 $resourceActions = $resourceActions->merge($group->resourceActions()->get());
             }
-            
+
             // Добавляем ResourceActions из ролей внутри групп
             foreach ($group->roles as $groupRole) {
                 if ($groupRole->relationLoaded('resourceActions')) {
@@ -67,7 +67,7 @@ trait HasPermissions
                 }
             }
         }
-        
+
         return $resourceActions->unique('id');
     }
 
@@ -445,7 +445,7 @@ trait HasPermissions
 
     /**
      * Проверить является ли пользователь суперадмином.
-     * 
+     *
      * @return bool
      */
     public function isSuperAdmin(): bool

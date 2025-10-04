@@ -7,8 +7,8 @@ namespace DFiks\UnPerm\Models;
 use DFiks\UnPerm\Traits\HasBitmask;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Throwable;
+use DB;
 
 class ResourceAction extends Model
 {
@@ -28,7 +28,7 @@ class ResourceAction extends Model
     {
         // Получаем все pivot записи напрямую из таблицы
         // Не используем морфную связь, т.к. у нас может быть несколько типов моделей
-        $pivots = \DB::table('model_resource_actions')
+        $pivots = DB::table('model_resource_actions')
             ->where('resource_action_id', $this->id)
             ->select('model_type', 'model_id')
             ->get();
@@ -46,13 +46,13 @@ class ResourceAction extends Model
             return null;
         })->filter();
     }
-    
+
     /**
-     * Получить количество всех пользователей (из всех моделей) для этого action
+     * Получить количество всех пользователей (из всех моделей) для этого action.
      */
     public function getUsersCount(): int
     {
-        return \DB::table('model_resource_actions')
+        return DB::table('model_resource_actions')
             ->where('resource_action_id', $this->id)
             ->count();
     }
@@ -61,7 +61,7 @@ class ResourceAction extends Model
     {
         $resourceType = get_class($resource);
         $resourceId = $resource->getKey();
-        
+
         // Используем метод getResourcePermissionSlug если доступен
         if (method_exists($resource, 'getResourcePermissionSlug')) {
             $slug = $resource->getResourcePermissionSlug($actionType);
@@ -69,8 +69,8 @@ class ResourceAction extends Model
             // Иначе создаём slug в стандартном формате
             $slug = sprintf(
                 '%s.%s.%s',
-                method_exists($resource, 'getResourcePermissionKey') 
-                    ? $resource->getResourcePermissionKey() 
+                method_exists($resource, 'getResourcePermissionKey')
+                    ? $resource->getResourcePermissionKey()
                     : $resource->getTable(),
                 $actionType,
                 $resourceId

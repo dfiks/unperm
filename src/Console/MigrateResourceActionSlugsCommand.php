@@ -7,6 +7,7 @@ namespace DFiks\UnPerm\Console;
 use DFiks\UnPerm\Models\ResourceAction;
 use DFiks\UnPerm\Support\PermBit;
 use Illuminate\Console\Command;
+use Throwable;
 
 class MigrateResourceActionSlugsCommand extends Command
 {
@@ -28,6 +29,7 @@ class MigrateResourceActionSlugsCommand extends Command
 
         if ($oldFormatActions->isEmpty()) {
             $this->info('✅ No ResourceActions with old slug format found!');
+
             return self::SUCCESS;
         }
 
@@ -40,10 +42,10 @@ class MigrateResourceActionSlugsCommand extends Command
         foreach ($oldFormatActions as $resourceAction) {
             try {
                 $oldSlug = $resourceAction->slug;
-                
+
                 // Получаем resource
                 $resourceClass = $resourceAction->resource_type;
-                
+
                 if (!class_exists($resourceClass)) {
                     $this->error("  ❌ Class not found: {$resourceClass}");
                     $errors++;
@@ -51,17 +53,17 @@ class MigrateResourceActionSlugsCommand extends Command
                 }
 
                 $resource = $resourceClass::find($resourceAction->resource_id);
-                
+
                 if (!$resource) {
                     $this->warn("  ⚠️  Resource not found: {$resourceClass}::{$resourceAction->resource_id}");
-                    $this->line("     Will use fallback slug generation");
-                    
+                    $this->line('     Will use fallback slug generation');
+
                     // Fallback: используем базовое имя класса и table name
                     $model = new $resourceClass();
-                    $resourceKey = method_exists($model, 'getResourcePermissionKey') 
+                    $resourceKey = method_exists($model, 'getResourcePermissionKey')
                         ? $model->getResourcePermissionKey()
                         : (method_exists($model, 'getTable') ? $model->getTable() : strtolower(class_basename($resourceClass)));
-                    
+
                     $newSlug = sprintf(
                         '%s.%s.%s',
                         $resourceKey,
@@ -74,10 +76,10 @@ class MigrateResourceActionSlugsCommand extends Command
                         $newSlug = $resource->getResourcePermissionSlug($resourceAction->action_type);
                     } else {
                         // Fallback
-                        $resourceKey = method_exists($resource, 'getResourcePermissionKey') 
+                        $resourceKey = method_exists($resource, 'getResourcePermissionKey')
                             ? $resource->getResourcePermissionKey()
                             : $resource->getTable();
-                        
+
                         $newSlug = sprintf(
                             '%s.%s.%s',
                             $resourceKey,
@@ -99,11 +101,11 @@ class MigrateResourceActionSlugsCommand extends Command
                     $resourceAction->save();
                     $updated++;
                 } else {
-                    $this->line("     [DRY RUN - not saved]");
+                    $this->line('     [DRY RUN - not saved]');
                     $updated++;
                 }
 
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->error("  ❌ Error processing {$resourceAction->slug}: " . $e->getMessage());
                 $errors++;
             }
@@ -113,10 +115,10 @@ class MigrateResourceActionSlugsCommand extends Command
 
         if ($dryRun) {
             $this->warn("DRY RUN: Would update {$updated} ResourceActions");
-            $this->line("Run without --dry-run to apply changes");
+            $this->line('Run without --dry-run to apply changes');
         } else {
             $this->info("✅ Updated {$updated} ResourceActions");
-            
+
             if ($updated > 0) {
                 $this->line('Rebuilding bitmask...');
                 PermBit::rebuild();
@@ -131,4 +133,3 @@ class MigrateResourceActionSlugsCommand extends Command
         return self::SUCCESS;
     }
 }
-

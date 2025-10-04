@@ -136,18 +136,18 @@ trait HasResourcePermissions
         // Проверяем в ролях и группах
         if (method_exists($user, 'roles')) {
             $user->load(['roles.resourceActions', 'groups.resourceActions', 'groups.roles.resourceActions']);
-            
+
             foreach ($user->roles as $role) {
                 if ($role->resourceActions()->where('slug', $slug)->exists()) {
                     return true;
                 }
             }
-            
+
             foreach ($user->groups as $group) {
                 if ($group->resourceActions()->where('slug', $slug)->exists()) {
                     return true;
                 }
-                
+
                 foreach ($group->roles as $groupRole) {
                     if ($groupRole->resourceActions()->where('slug', $slug)->exists()) {
                         return true;
