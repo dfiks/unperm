@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace DFiks\UnPerm\Http\Livewire;
 
-use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Services\ModelDiscovery;
 use DFiks\UnPerm\Support\ResourcePermission;
 use Livewire\Component;
@@ -24,7 +23,7 @@ class ManageResourcePermissions extends Component
     public bool $showPermissionsModal = false;
     
     public array $currentPermissions = [];
-    public array $availableActions = [];
+    public array $availableActions = ['view', 'create', 'update', 'delete'];
     public array $userPermissions = [];
     public array $availableUsers = [];
     
@@ -32,6 +31,7 @@ class ManageResourcePermissions extends Component
     public ?string $newUserId = null;
     public ?string $selectedUserModel = null;
     public array $newUserActions = [];
+    public string $customAction = '';
 
     protected $queryString = ['selectedResourceModel' => ['except' => '']];
 
@@ -48,14 +48,7 @@ class ManageResourcePermissions extends Component
             $this->selectedUserModel = array_key_first($this->availableUserModels);
         }
         
-        // Загружаем actions из БД
-        $this->loadAvailableActions();
         $this->loadAvailableUsers();
-    }
-    
-    protected function loadAvailableActions()
-    {
-        $this->availableActions = Action::orderBy('slug')->pluck('slug', 'id')->toArray();
     }
     
     protected function loadAvailableUsers()
@@ -121,7 +114,6 @@ class ManageResourcePermissions extends Component
         
         return view('unperm::livewire.manage-resource-permissions', [
             'resources' => $resources,
-            'allActions' => Action::orderBy('slug')->get(),
         ]);
     }
 
@@ -155,7 +147,6 @@ class ManageResourcePermissions extends Component
             
             // Загружаем текущие разрешения и пользователей
             $this->loadCurrentPermissions($resource);
-            $this->loadAvailableActions();
             $this->loadAvailableUsers();
             
             $this->showPermissionsModal = true;
@@ -251,11 +242,18 @@ class ManageResourcePermissions extends Component
                 return;
             }
             
-            // Назначаем права (конвертируем ID actions в slugs)
-            foreach ($this->newUserActions as $actionId) {
-                $action = Action::find($actionId);
-                if ($action) {
-                    ResourcePermission::grant($user, $resource, $action->slug);
+            // Собираем все действия (включая кастомное)
+            $actionsToGrant = $this->newUserActions;
+            
+            // Добавляем кастомное действие, если указано
+            if (!empty($this->customAction)) {
+                $actionsToGrant[] = trim($this->customAction);
+            }
+            
+            // Назначаем права
+            foreach ($actionsToGrant as $action) {
+                if (!empty($action)) {
+                    ResourcePermission::grant($user, $resource, $action);
                 }
             }
             
@@ -265,6 +263,7 @@ class ManageResourcePermissions extends Component
             // Очищаем форму
             $this->newUserId = null;
             $this->newUserActions = [];
+            $this->customAction = '';
             
             session()->flash('message', 'Права успешно назначены');
         } catch (\Throwable $e) {
@@ -352,6 +351,7 @@ class ManageResourcePermissions extends Component
         $this->userPermissions = [];
         $this->newUserId = null;
         $this->newUserActions = [];
+        $this->customAction = '';
     }
     
     public function updatedSelectedUserModel()

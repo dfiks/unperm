@@ -148,17 +148,24 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Действия</label>
-                            <div class="border border-gray-300 rounded-xl p-3 max-h-32 overflow-y-auto bg-white">
-                                @forelse($allActions as $action)
-                                    <label class="flex items-center mb-2 last:mb-0 hover:bg-gray-50 p-1.5 rounded cursor-pointer transition-smooth">
-                                        <input type="checkbox" wire:model="newUserActions" value="{{ $action->id }}" 
-                                               class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                        <span class="ml-2 text-sm text-gray-700 font-medium">{{ $action->slug }}</span>
-                                    </label>
-                                @empty
-                                    <p class="text-sm text-gray-500">Нет доступных действий</p>
-                                @endforelse
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Действия на ресурс</label>
+                            <div class="border border-gray-300 rounded-xl p-3 bg-white space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    @foreach($availableActions as $action)
+                                        <label class="flex items-center hover:bg-gray-50 p-2 rounded cursor-pointer transition-smooth">
+                                            <input type="checkbox" wire:model="newUserActions" value="{{ $action }}" 
+                                                   class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                            <span class="ml-2 text-sm text-gray-700 font-medium">{{ ucfirst($action) }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                
+                                <div class="pt-2 border-t border-gray-200">
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Или кастомное действие:</label>
+                                    <input type="text" wire:model="customAction" 
+                                           placeholder="например: approve, archive..."
+                                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
+                                </div>
                             </div>
                             @error('newUserActions') 
                                 <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> 
