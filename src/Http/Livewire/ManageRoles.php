@@ -152,27 +152,44 @@ class ManageRoles extends Component
             return;
         }
         
-        $query = $this->selectedResourceType::query();
-        
-        // Добавляем поиск
-        if ($this->resourceSearch) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', "%{$this->resourceSearch}%")
-                    ->orWhere('title', 'like', "%{$this->resourceSearch}%");
-            });
-        }
-        
-        $this->availableResources = $query
-            ->select('id', 'name')
-            ->limit(50)
-            ->get()
-            ->map(function ($resource) {
+        try {
+            $query = $this->selectedResourceType::query();
+            
+            // Добавляем поиск
+            if ($this->resourceSearch) {
+                $query->where(function ($q) {
+                    // Пытаемся искать по разным полям
+                    $searchFields = ['name', 'title', 'slug', 'email'];
+                    foreach ($searchFields as $field) {
+                        try {
+                            $q->orWhere($field, 'like', "%{$this->resourceSearch}%");
+                        } catch (\Exception $e) {
+                            // Поле не существует, пропускаем
+                        }
+                    }
+                });
+            }
+            
+            $resources = $query->limit(50)->get();
+            
+            $this->availableResources = $resources->map(function ($resource) {
+                // Пытаемся найти подходящее поле для отображения
+                $displayName = $resource->name 
+                    ?? $resource->title 
+                    ?? $resource->slug 
+                    ?? $resource->email 
+                    ?? "#{$resource->id}";
+                
                 return [
                     'id' => $resource->id,
-                    'name' => $resource->name ?? $resource->title ?? $resource->id,
+                    'name' => $displayName,
                 ];
-            })
-            ->toArray();
+            })->toArray();
+            
+        } catch (\Exception $e) {
+            $this->availableResources = [];
+            session()->flash('error', 'Ошибка загрузки ресурсов: ' . $e->getMessage());
+        }
     }
     
     public function addResourcePermission()

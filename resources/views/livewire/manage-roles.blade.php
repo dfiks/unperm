@@ -199,13 +199,20 @@
                         <!-- Resource Type -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Тип ресурса</label>
-                            <select wire:model="selectedResourceType" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
+                            <select wire:model.live="selectedResourceType" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
                                 <option value="">Выберите тип ресурса...</option>
                                 @foreach($availableResourceTypes as $class => $name)
                                     <option value="{{ $class }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                             @error('selectedResourceType') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                            
+                            @if(count($availableResourceTypes) === 0)
+                                <p class="text-xs text-amber-600 mt-2">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Не найдено моделей с HasResourcePermissions trait
+                                </p>
+                            @endif
                         </div>
 
                         @if($selectedResourceType)
@@ -225,15 +232,27 @@
 
                             <!-- Resource Selection -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Конкретный ресурс</label>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Конкретный ресурс
+                                    @if(count($availableResources) > 0)
+                                        <span class="text-xs text-gray-500">(найдено: {{ count($availableResources) }})</span>
+                                    @endif
+                                </label>
                                 <select wire:model="selectedResourceId" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth">
                                     <option value="">Выберите ресурс...</option>
-                                    @foreach($availableResources as $resource)
+                                    @forelse($availableResources as $resource)
                                         <option value="{{ $resource['id'] }}">{{ $resource['name'] }}</option>
-                                    @endforeach
+                                    @empty
+                                        <option value="" disabled>Ресурсы не найдены</option>
+                                    @endforelse
                                 </select>
                                 @if(count($availableResources) === 0 && $selectedResourceType)
-                                    <p class="text-xs text-gray-500 mt-2">Загрузка ресурсов...</p>
+                                    <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <p class="text-xs text-yellow-700">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Ресурсы не найдены или еще загружаются. Попробуйте использовать поиск выше.
+                                        </p>
+                                    </div>
                                 @endif
                                 @error('selectedResourceId') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
                             </div>
