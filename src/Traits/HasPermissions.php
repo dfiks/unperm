@@ -442,4 +442,14 @@ trait HasPermissions
             \DFiks\UnPerm\Support\BitmaskCache::clearUserBitmask($this);
         }
     }
+
+    /**
+     * Проверить является ли пользователь суперадмином.
+     * 
+     * @return bool
+     */
+    public function isSuperAdmin(): bool
+    {
+        return \DFiks\UnPerm\Support\SuperAdminChecker::isSuperAdmin($this);
+    }
 }
