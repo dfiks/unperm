@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DFiks\UnPerm\Http\Livewire;
 
+use DFiks\UnPerm\Models\Action;
 use DFiks\UnPerm\Services\ModelDiscovery;
 use DFiks\UnPerm\Support\ResourcePermission;
 use Livewire\Component;
@@ -23,11 +24,13 @@ class ManageResourcePermissions extends Component
     public bool $showPermissionsModal = false;
     
     public array $currentPermissions = [];
-    public array $availableActions = ['view', 'edit', 'delete', 'create', 'update', 'archive'];
+    public array $availableActions = [];
     public array $userPermissions = [];
+    public array $availableUsers = [];
     
     public string $search = '';
-    public string $newUserEmail = '';
+    public ?string $newUserId = null;
+    public ?string $selectedUserModel = null;
     public array $newUserActions = [];
 
     protected $queryString = ['selectedResourceModel' => ['except' => '']];
@@ -39,6 +42,56 @@ class ManageResourcePermissions extends Component
         
         if (empty($this->selectedResourceModel) && !empty($this->availableResourceModels)) {
             $this->selectedResourceModel = array_key_first($this->availableResourceModels);
+        }
+        
+        if (empty($this->selectedUserModel) && !empty($this->availableUserModels)) {
+            $this->selectedUserModel = array_key_first($this->availableUserModels);
+        }
+        
+        // Загружаем actions из БД
+        $this->loadAvailableActions();
+        $this->loadAvailableUsers();
+    }
+    
+    protected function loadAvailableActions()
+    {
+        $this->availableActions = Action::orderBy('slug')->pluck('slug', 'id')->toArray();
+    }
+    
+    protected function loadAvailableUsers()
+    {
+        if (!$this->selectedUserModel || !class_exists($this->selectedUserModel)) {
+            $this->availableUsers = [];
+            return;
+        }
+        
+        try {
+            $query = $this->selectedUserModel::query();
+            
+            // Пытаемся сортировать по name, если поле существует
+            if (method_exists($this->selectedUserModel, 'getConnection')) {
+                $instance = new $this->selectedUserModel;
+                if ($instance->getConnection()->getSchemaBuilder()->hasColumn($instance->getTable(), 'name')) {
+                    $query->orderBy('name');
+                } elseif ($instance->getConnection()->getSchemaBuilder()->hasColumn($instance->getTable(), 'email')) {
+                    $query->orderBy('email');
+                }
+            }
+            
+            $users = $query->get();
+            $this->availableUsers = $users->mapWithKeys(function ($user) {
+                $name = $user->name ?? $user->email ?? 'User #' . $user->getKey();
+                $label = $name;
+                
+                // Добавляем email если есть и это не имя
+                if (isset($user->email) && $user->email !== $name) {
+                    $label .= ' (' . $user->email . ')';
+                }
+                
+                return [$user->getKey() => $label];
+            })->toArray();
+        } catch (\Throwable $e) {
+            $this->availableUsers = [];
         }
     }
 
@@ -68,6 +121,7 @@ class ManageResourcePermissions extends Component
         
         return view('unperm::livewire.manage-resource-permissions', [
             'resources' => $resources,
+            'allActions' => Action::orderBy('slug')->get(),
         ]);
     }
 
@@ -99,8 +153,10 @@ class ManageResourcePermissions extends Component
             $this->selectedResourceId = $resourceId;
             $this->resourceName = $this->getResourceDisplayName($resource);
             
-            // Загружаем текущие разрешения
+            // Загружаем текущие разрешения и пользователей
             $this->loadCurrentPermissions($resource);
+            $this->loadAvailableActions();
+            $this->loadAvailableUsers();
             
             $this->showPermissionsModal = true;
         } catch (\Throwable $e) {
@@ -167,27 +223,24 @@ class ManageResourcePermissions extends Component
     public function addUserPermission()
     {
         $this->validate([
-            'newUserEmail' => 'required|email',
+            'newUserId' => 'required',
             'newUserActions' => 'required|array|min:1',
         ], [
-            'newUserEmail.required' => 'Укажите email пользователя',
-            'newUserEmail.email' => 'Неверный формат email',
+            'newUserId.required' => 'Выберите пользователя',
             'newUserActions.required' => 'Выберите хотя бы одно действие',
         ]);
         
         try {
-            // Ищем пользователя по email во всех user моделях
-            $user = null;
-            foreach ($this->availableUserModels as $userModelClass => $info) {
-                $found = $userModelClass::where('email', $this->newUserEmail)->first();
-                if ($found) {
-                    $user = $found;
-                    break;
-                }
+            // Находим пользователя по ID
+            if (!$this->selectedUserModel || !class_exists($this->selectedUserModel)) {
+                session()->flash('error', 'Модель пользователя не выбрана');
+                return;
             }
             
+            $user = $this->selectedUserModel::whereKey($this->newUserId)->first();
+            
             if (!$user) {
-                session()->flash('error', 'Пользователь с таким email не найден');
+                session()->flash('error', 'Пользователь не найден');
                 return;
             }
             
@@ -198,16 +251,19 @@ class ManageResourcePermissions extends Component
                 return;
             }
             
-            // Назначаем права
-            foreach ($this->newUserActions as $action) {
-                ResourcePermission::grant($user, $resource, $action);
+            // Назначаем права (конвертируем ID actions в slugs)
+            foreach ($this->newUserActions as $actionId) {
+                $action = Action::find($actionId);
+                if ($action) {
+                    ResourcePermission::grant($user, $resource, $action->slug);
+                }
             }
             
             // Обновляем список
             $this->loadCurrentPermissions($resource);
             
             // Очищаем форму
-            $this->newUserEmail = '';
+            $this->newUserId = null;
             $this->newUserActions = [];
             
             session()->flash('message', 'Права успешно назначены');
@@ -294,8 +350,14 @@ class ManageResourcePermissions extends Component
         $this->resourceName = null;
         $this->currentPermissions = [];
         $this->userPermissions = [];
-        $this->newUserEmail = '';
+        $this->newUserId = null;
         $this->newUserActions = [];
+    }
+    
+    public function updatedSelectedUserModel()
+    {
+        $this->loadAvailableUsers();
+        $this->newUserId = null;
     }
 }
 

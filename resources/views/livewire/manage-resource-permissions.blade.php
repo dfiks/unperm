@@ -122,27 +122,43 @@
                 <div class="mt-6 p-5 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
                     <h4 class="text-lg font-semibold mb-4 text-gray-800">Добавить пользователя</h4>
                     
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Email пользователя</label>
-                            <input type="email" wire:model="newUserEmail" 
-                                   placeholder="user@example.com"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth bg-white">
-                            @error('newUserEmail') 
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Модель пользователя</label>
+                            <select wire:model.live="selectedUserModel" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth bg-white">
+                                @foreach($availableUserModels as $modelClass => $modelInfo)
+                                    <option value="{{ $modelClass }}">{{ $modelInfo['name'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Пользователь</label>
+                            <select wire:model="newUserId" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-smooth bg-white">
+                                <option value="">Выберите пользователя...</option>
+                                @foreach($availableUsers as $userId => $userLabel)
+                                    <option value="{{ $userId }}">{{ $userLabel }}</option>
+                                @endforeach
+                            </select>
+                            @error('newUserId') 
                                 <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> 
                             @enderror
                         </div>
                         
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Действия</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                @foreach($availableActions as $action)
-                                    <label class="inline-flex items-center">
-                                        <input type="checkbox" wire:model="newUserActions" value="{{ $action }}" 
+                            <div class="border border-gray-300 rounded-xl p-3 max-h-32 overflow-y-auto bg-white">
+                                @forelse($allActions as $action)
+                                    <label class="flex items-center mb-2 last:mb-0 hover:bg-gray-50 p-1.5 rounded cursor-pointer transition-smooth">
+                                        <input type="checkbox" wire:model="newUserActions" value="{{ $action->id }}" 
                                                class="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                        <span class="ml-2 text-sm text-gray-700 font-medium">{{ ucfirst($action) }}</span>
+                                        <span class="ml-2 text-sm text-gray-700 font-medium">{{ $action->slug }}</span>
                                     </label>
-                                @endforeach
+                                @empty
+                                    <p class="text-sm text-gray-500">Нет доступных действий</p>
+                                @endforelse
                             </div>
                             @error('newUserActions') 
                                 <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> 
@@ -170,7 +186,7 @@
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             @foreach($userInfo['actions'] as $action)
                                                 <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                    {{ ucfirst($action) }}
+                                                    {{ $action }}
                                                     <button wire:click="revokeUserPermission('{{ $userId }}', '{{ $action }}')" 
                                                             class="ml-2 text-indigo-500 hover:text-indigo-700 transition-smooth">
                                                         <i class="fas fa-times"></i>
