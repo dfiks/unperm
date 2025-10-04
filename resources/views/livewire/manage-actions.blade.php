@@ -128,6 +128,62 @@
         {{ $actions->links() }}
     </div>
 
+    <!-- Orphaned Resource Actions (без глобального action) -->
+    @if(isset($orphanedResourceActions) && $orphanedResourceActions->count() > 0)
+        <div class="mt-8">
+            <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-xl p-6 mb-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">
+                            Resource Actions без глобального Action
+                        </h3>
+                        <p class="text-sm text-gray-700 mb-4">
+                            Найдены Resource Actions, для которых не существует соответствующий глобальный Action. 
+                            Создайте глобальные Actions, чтобы удобно управлять ими в админке.
+                        </p>
+                        
+                        <div class="space-y-3">
+                            @foreach($orphanedResourceActions as $group)
+                                <div class="bg-white rounded-lg p-4 border border-yellow-200 flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg text-sm font-mono">
+                                                {{ class_basename($group->resource_type) }}
+                                            </span>
+                                            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold">
+                                                {{ $group->action_type }}
+                                            </span>
+                                            <span class="text-gray-500 text-sm">
+                                                <i class="fas fa-database mr-1"></i>
+                                                {{ $group->count }} записей
+                                            </span>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-600">
+                                            Будет создан Action: 
+                                            <code class="bg-gray-100 px-2 py-1 rounded text-xs">
+                                                {{ $this->getResourceKeyFromType($group->resource_type) }}.{{ $group->action_type }}
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        wire:click="createGlobalActionFromGroup('{{ $group->resource_type }}', '{{ $group->action_type }}')"
+                                        class="ml-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center space-x-2"
+                                    >
+                                        <i class="fas fa-plus"></i>
+                                        <span>Создать Global Action</span>
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Modal -->
     @if($showModal)
         <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">

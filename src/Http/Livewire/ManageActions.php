@@ -59,11 +59,71 @@ class ManageActions extends Component
                 }
             }
         }
+        
+        // Также загружаем Resource Actions, для которых НЕТ глобального Action
+        // Группируем по resource_type и action_type
+        $orphanedResourceActions = ResourceAction::selectRaw('resource_type, action_type, COUNT(*) as count, MAX(created_at) as latest')
+            ->groupBy('resource_type', 'action_type')
+            ->having('count', '>', 0)
+            ->get()
+            ->filter(function ($group) use ($actions) {
+                // Проверяем, есть ли глобальный action для этой группы
+                $expectedSlug = $this->getResourceKeyFromType($group->resource_type) . '.' . $group->action_type;
+                return !$actions->contains('slug', $expectedSlug);
+            });
 
         return view('unperm::livewire.manage-actions', [
             'actions' => $actions,
             'resourceActionsMap' => $resourceActionsMap,
+            'orphanedResourceActions' => $orphanedResourceActions,
         ]);
+    }
+    
+    protected function getResourceKeyFromType(string $resourceType): string
+    {
+        // Пытаемся получить resource key из типа модели
+        if (class_exists($resourceType)) {
+            $model = new $resourceType();
+            if (method_exists($model, 'getResourcePermissionKey')) {
+                return $model->getResourcePermissionKey();
+            }
+            if (method_exists($model, 'getTable')) {
+                return $model->getTable();
+            }
+        }
+        
+        return class_basename($resourceType);
+    }
+    
+    public function createGlobalActionFromGroup($resourceType, $actionType)
+    {
+        try {
+            $resourceKey = $this->getResourceKeyFromType($resourceType);
+            $slug = $resourceKey . '.' . $actionType;
+            
+            // Проверяем что такого action еще нет
+            if (Action::where('slug', $slug)->exists()) {
+                session()->flash('error', 'Global action уже существует: ' . $slug);
+                return;
+            }
+            
+            // Создаем глобальный action
+            $name = ucfirst($actionType) . ' ' . ucfirst($resourceKey);
+            $description = ucfirst($actionType) . ' permission for ' . $resourceKey;
+            
+            Action::create([
+                'name' => $name,
+                'slug' => $slug,
+                'description' => $description,
+                'bitmask' => '0',
+            ]);
+            
+            PermBit::rebuild();
+            
+            session()->flash('message', 'Global action создан: ' . $slug);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Ошибка создания action: ' . $e->getMessage());
+        }
     }
 
     public function toggleExpand($actionId)
