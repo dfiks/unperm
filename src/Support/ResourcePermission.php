@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DFiks\UnPerm\Support;
 
 use DFiks\UnPerm\Models\Action;
+use DFiks\UnPerm\Models\ResourceAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use BadMethodCallException;
@@ -80,14 +81,16 @@ class ResourcePermission
             throw new BadMethodCallException('Resource model must use HasResourcePermissions trait');
         }
 
-        $actionModel = self::createOrGet(
-            $resource->getResourcePermissionKey(),
-            $action,
-            $resource->getResourcePermissionId(),
-            $description
-        );
+        // Создаем или получаем ResourceAction
+        $resourceAction = ResourceAction::findOrCreateForResource($resource, $action);
+        
+        // Если action только что создан, обновляем bitmask
+        if ($resourceAction->wasRecentlyCreated) {
+            PermBit::rebuild();
+            $resourceAction->refresh();
+        }
 
-        $user->assignAction($actionModel);
+        $user->assignAction($resourceAction);
 
         // Перезагружаем связь actions чтобы изменения были видны сразу
         $user->load('actions');
@@ -106,11 +109,13 @@ class ResourcePermission
             throw new BadMethodCallException('Resource model must use HasResourcePermissions trait');
         }
 
-        $slug = $resource->getResourcePermissionSlug($action);
-        $actionModel = Action::where('slug', $slug)->first();
+        $resourceAction = ResourceAction::where('resource_type', get_class($resource))
+            ->where('resource_id', $resource->getKey())
+            ->where('action_type', $action)
+            ->first();
 
-        if ($actionModel) {
-            $user->removeAction($actionModel);
+        if ($resourceAction) {
+            $user->removeAction($resourceAction);
             // Перезагружаем связь actions чтобы изменения были видны сразу
             $user->load('actions');
         }
@@ -142,14 +147,12 @@ class ResourcePermission
             throw new BadMethodCallException('Resource model must use HasResourcePermissions trait');
         }
 
-        $resourceKey = $resource->getResourcePermissionKey();
-        $resourceId = $resource->getResourcePermissionId();
-
-        // Получаем все actions для этой записи
-        $actions = Action::where('slug', 'like', "{$resourceKey}.%.{$resourceId}")
+        // Получаем все resource actions для этой записи
+        $resourceActions = ResourceAction::where('resource_type', get_class($resource))
+            ->where('resource_id', $resource->getKey())
             ->get();
 
-        foreach ($actions as $action) {
+        foreach ($resourceActions as $action) {
             $user->removeAction($action);
         }
         
@@ -190,23 +193,32 @@ class ResourcePermission
         string $action,
         string $userModelClass
     ): \Illuminate\Support\Collection {
-        if (!method_exists($resource, 'getResourcePermissionSlug')) {
-            throw new BadMethodCallException('Resource model must use HasResourcePermissions trait');
-        }
+        $resourceAction = ResourceAction::where('resource_type', get_class($resource))
+            ->where('resource_id', $resource->getKey())
+            ->where('action_type', $action)
+            ->first();
 
-        $slug = $resource->getResourcePermissionSlug($action);
-        $actionModel = Action::where('slug', $slug)->first();
-
-        if (!$actionModel) {
+        if (!$resourceAction) {
             return collect([]);
         }
 
         // Получаем пользователей через полиморфную связь
         return DB::table('model_actions')
-            ->where('action_id', $actionModel->id)
+            ->where('action_id', $resourceAction->id)
             ->where('model_type', $userModelClass)
             ->pluck('model_id')
             ->map(fn ($id) => $userModelClass::find($id))
             ->filter();
+    }
+    
+    /**
+     * Получить все resource actions для конкретного ресурса.
+     *
+     * @param Model $resource
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getResourceActions(Model $resource): \Illuminate\Database\Eloquent\Collection
+    {
+        return ResourceAction::getForResource($resource);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DFiks\UnPerm\Http\Livewire;
 
 use DFiks\UnPerm\Models\Action;
+use DFiks\UnPerm\Models\ResourceAction;
 use DFiks\UnPerm\Support\PermBit;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -20,6 +21,7 @@ class ManageActions extends Component
     public $name = '';
     public $slug = '';
     public $description = '';
+    public array $expandedActions = [];
 
     protected $queryString = ['search'];
 
@@ -33,9 +35,44 @@ class ManageActions extends Component
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        // Загружаем resource actions для раскрытых actions
+        $resourceActionsMap = [];
+        if (!empty($this->expandedActions)) {
+            foreach ($this->expandedActions as $actionId => $isExpanded) {
+                if ($isExpanded) {
+                    $action = $actions->firstWhere('id', $actionId);
+                    if ($action) {
+                        $resourceActions = ResourceAction::where('action_type', $action->slug)
+                            ->orderBy('created_at', 'desc')
+                            ->limit(20)
+                            ->get();
+                        
+                        // Добавляем количество пользователей для каждого resource action
+                        $resourceActions->each(function ($ra) {
+                            $ra->usersCount = \DB::table('model_actions')
+                                ->where('action_id', $ra->id)
+                                ->count();
+                        });
+                        
+                        $resourceActionsMap[$actionId] = $resourceActions;
+                    }
+                }
+            }
+        }
+
         return view('unperm::livewire.manage-actions', [
             'actions' => $actions,
+            'resourceActionsMap' => $resourceActionsMap,
         ]);
+    }
+    
+    public function toggleExpand($actionId)
+    {
+        if (isset($this->expandedActions[$actionId])) {
+            $this->expandedActions[$actionId] = !$this->expandedActions[$actionId];
+        } else {
+            $this->expandedActions[$actionId] = true;
+        }
     }
 
     public function create()

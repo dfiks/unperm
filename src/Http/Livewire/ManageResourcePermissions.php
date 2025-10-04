@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DFiks\UnPerm\Http\Livewire;
 
+use DFiks\UnPerm\Models\ResourceAction;
 use DFiks\UnPerm\Services\ModelDiscovery;
 use DFiks\UnPerm\Support\ResourcePermission;
 use Livewire\Component;
@@ -160,15 +161,14 @@ class ManageResourcePermissions extends Component
         $this->currentPermissions = [];
         $this->userPermissions = [];
         
-        $resourceKey = $resource->getResourcePermissionKey();
-        $resourceId = $resource->getResourcePermissionId();
+        // Получаем все resource actions для этого ресурса
+        $resourceActions = ResourceAction::getForResource($resource);
         
-        // Получаем всех пользователей с правами на этот ресурс
-        foreach ($this->availableActions as $action) {
-            // Перебираем все модели пользователей
+        // Для каждого resource action получаем пользователей
+        foreach ($resourceActions as $resourceAction) {
             foreach ($this->availableUserModels as $userModelClass => $info) {
                 try {
-                    $users = ResourcePermission::getUsersWithAccess($resource, $action, $userModelClass);
+                    $users = $resourceAction->users()->where('model_type', $userModelClass)->get();
                     
                     foreach ($users as $user) {
                         $userId = $user->getKey();
@@ -182,12 +182,11 @@ class ManageResourcePermissions extends Component
                             ];
                         }
                         
-                        if (!in_array($action, $this->userPermissions[$userId]['actions'])) {
-                            $this->userPermissions[$userId]['actions'][] = $action;
+                        if (!in_array($resourceAction->action_type, $this->userPermissions[$userId]['actions'])) {
+                            $this->userPermissions[$userId]['actions'][] = $resourceAction->action_type;
                         }
                     }
                 } catch (\Throwable $e) {
-                    // Пропускаем если модель недоступна
                     continue;
                 }
             }

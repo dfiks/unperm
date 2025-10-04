@@ -32,7 +32,13 @@
                 @forelse($actions as $action)
                     <tr class="hover:bg-gray-50 transition-smooth">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-semibold text-gray-800">{{ $action->name }}</div>
+                            <div class="flex items-center">
+                                <button wire:click="toggleExpand('{{ $action->id }}')" 
+                                        class="mr-2 text-gray-400 hover:text-gray-600 transition-smooth">
+                                    <i class="fas fa-chevron-{{ isset($expandedActions[$action->id]) && $expandedActions[$action->id] ? 'down' : 'right' }} text-xs"></i>
+                                </button>
+                                <div class="text-sm font-semibold text-gray-800">{{ $action->name }}</div>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-3 py-1.5 text-xs font-mono bg-purple-50 text-purple-700 rounded-lg">{{ $action->slug }}</span>
@@ -52,6 +58,59 @@
                             </button>
                         </td>
                     </tr>
+                    
+                    @if(isset($expandedActions[$action->id]) && $expandedActions[$action->id])
+                        <tr class="bg-indigo-50">
+                            <td colspan="5" class="px-6 py-4">
+                                <div class="ml-8">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                                        <i class="fas fa-link mr-2 text-indigo-600"></i>
+                                        Связанные ресурсы (Resource Actions)
+                                    </h4>
+                                    
+                                    @if(isset($resourceActionsMap[$action->id]) && $resourceActionsMap[$action->id]->count() > 0)
+                                        <div class="space-y-2">
+                                            @foreach($resourceActionsMap[$action->id] as $resourceAction)
+                                                <div class="bg-white rounded-lg p-3 border border-indigo-200">
+                                                    <div class="flex items-start justify-between">
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center space-x-2 mb-1">
+                                                                <span class="px-2 py-0.5 text-xs font-mono bg-purple-100 text-purple-800 rounded">
+                                                                    {{ $resourceAction->getResourceClassName() }}
+                                                                </span>
+                                                                <span class="text-xs text-gray-500">#{{ Str::limit($resourceAction->resource_id, 8) }}</span>
+                                                                <span class="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded font-medium">
+                                                                    {{ $resourceAction->action_type }}
+                                                                </span>
+                                                            </div>
+                                                            <div class="text-xs text-gray-600 mt-1">
+                                                                {{ $resourceAction->description }}
+                                                            </div>
+                                                            @if(isset($resourceAction->usersCount) && $resourceAction->usersCount > 0)
+                                                                <div class="flex items-center mt-2 space-x-1">
+                                                                    <i class="fas fa-users text-xs text-gray-400"></i>
+                                                                    <span class="text-xs text-gray-500">
+                                                                        Пользователей: {{ $resourceAction->usersCount }}
+                                                                    </span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                        <div class="text-xs text-gray-400">
+                                                            {{ $resourceAction->created_at->diffForHumans() }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-sm text-gray-500 italic">
+                                            Нет связанных resource actions
+                                        </div>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr>
                         <td colspan="5" class="px-6 py-16 text-center">
