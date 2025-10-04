@@ -47,8 +47,10 @@ class ManageActions extends Component
                             ->limit(20)
                             ->get();
 
-                        // Загружаем количество пользователей одним запросом через withCount
-                        $resourceActions->loadCount('users as usersCount');
+                        // Добавляем количество пользователей для каждого action
+                        $resourceActions->each(function ($resourceAction) {
+                            $resourceAction->usersCount = $resourceAction->getUsersCount();
+                        });
 
                         $resourceActionsMap[$actionId] = $resourceActions;
                     }

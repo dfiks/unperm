@@ -24,26 +24,14 @@ class ResourceAction extends Model
         'description',
     ];
 
-    public function users(): BelongsToMany
-    {
-        return $this->morphedByMany(
-            config('unperm.user_model', 'App\\Models\\User'),
-            'model',
-            'model_resource_actions',
-            'resource_action_id',
-            'model_id'
-        )->withTimestamps();
-    }
-
     public function allUsers()
     {
-        // Получаем все pivot записи через саму связь
-        // Используем newPivot() для доступа к pivot данным
-        $connection = $this->getConnection();
-        $pivots = $this->users()
-            ->newPivotStatement()
+        // Получаем все pivot записи напрямую из таблицы
+        // Не используем морфную связь, т.к. у нас может быть несколько типов моделей
+        $pivots = \DB::table('model_resource_actions')
             ->where('resource_action_id', $this->id)
-            ->get(['model_type', 'model_id']);
+            ->select('model_type', 'model_id')
+            ->get();
 
         // Гидратируем модели пользователей из разных классов
         return $pivots->map(function ($pivot) {
@@ -57,6 +45,16 @@ class ResourceAction extends Model
 
             return null;
         })->filter();
+    }
+    
+    /**
+     * Получить количество всех пользователей (из всех моделей) для этого action
+     */
+    public function getUsersCount(): int
+    {
+        return \DB::table('model_resource_actions')
+            ->where('resource_action_id', $this->id)
+            ->count();
     }
 
     public static function findOrCreateForResource($resource, string $actionType): self
