@@ -66,6 +66,11 @@ trait HasResourcePermissions
             throw new BadMethodCallException('User model must use HasPermissions trait');
         }
 
+        // Проверяем суперадмина ПЕРВЫМ
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
         // Проверяем точечное разрешение на конкретную запись через прямой запрос к БД
         // Так как dynamic resource permissions могут не быть в PermBit кеше
         $resourceSlug = $this->getResourcePermissionSlug($action);
@@ -166,6 +171,11 @@ trait HasResourcePermissions
     {
         if (!method_exists($user, 'hasAction')) {
             throw new BadMethodCallException('User model must use HasPermissions trait');
+        }
+
+        // Если пользователь суперадмин - возвращаем все записи
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return $query;
         }
 
         $resourceKey = $this->getResourcePermissionKey();
