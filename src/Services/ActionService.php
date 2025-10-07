@@ -39,7 +39,15 @@ class ActionService
             });
         }
 
-        return $query->orderBy('slug')->paginate($perPage);
+        $paginator = $query->orderBy('slug')->paginate($perPage);
+
+        $paginator->getCollection()->transform(function ($action) {
+            $action->depends = $this->getActionDependencies($action->slug);
+
+            return $action;
+        });
+
+        return $paginator;
     }
 
     public function find(string $id): ?Action
