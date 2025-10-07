@@ -268,6 +268,7 @@ trait HasResourcePermissions
 
         if (!empty($userActions)) {
             $query->whereIn($this->getKeyName(), $userActions);
+
             return $query;
         }
 

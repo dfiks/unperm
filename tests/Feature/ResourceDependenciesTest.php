@@ -76,5 +76,3 @@ class ResourceDependenciesTest extends TestCase
         $this->assertTrue($password->userCan($user, 'view'));
     }
 }
-
-

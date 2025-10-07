@@ -62,5 +62,3 @@ class ActionDependenciesTest extends TestCase
         $this->assertTrue($user->hasAllActions(['posts.view', 'posts.edit']));
     }
 }
-
-

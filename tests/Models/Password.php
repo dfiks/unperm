@@ -22,5 +22,3 @@ class Password extends Model
         return $this->belongsTo(Folder::class, 'folder_id');
     }
 }
-
-
