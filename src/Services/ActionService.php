@@ -17,7 +17,13 @@ class ActionService
     {
         $this->authorize('admin.permissions.view');
 
-        return Action::orderBy('slug')->get();
+        $actions = Action::orderBy('slug')->get();
+
+        return $actions->map(function ($action) {
+            $action->depends = $this->getActionDependencies($action->slug);
+
+            return $action;
+        });
     }
 
     public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator
@@ -40,14 +46,24 @@ class ActionService
     {
         $this->authorize('admin.permissions.view');
 
-        return Action::find($id);
+        $action = Action::find($id);
+        if ($action) {
+            $action->depends = $this->getActionDependencies($action->slug);
+        }
+
+        return $action;
     }
 
     public function findBySlug(string $slug): ?Action
     {
         $this->authorize('admin.permissions.view');
 
-        return Action::where('slug', $slug)->first();
+        $action = Action::where('slug', $slug)->first();
+        if ($action) {
+            $action->depends = $this->getActionDependencies($action->slug);
+        }
+
+        return $action;
     }
 
     public function create(array $data): Action
@@ -118,5 +134,28 @@ class ActionService
         $this->authorize('admin.permissions.view');
 
         return $action->groups()->count();
+    }
+
+    protected function getActionDependencies(string $slug): array
+    {
+        $parts = explode('.', $slug, 2);
+        if (count($parts) !== 2) {
+            return [];
+        }
+
+        [$category, $name] = $parts;
+        $config = config('unperm.actions', []);
+
+        if (!isset($config[$category][$name])) {
+            return [];
+        }
+
+        $definition = $config[$category][$name];
+
+        if (is_array($definition) && isset($definition['depends'])) {
+            return array_values(array_filter(array_map('strval', (array) $definition['depends'])));
+        }
+
+        return [];
     }
 }
