@@ -16,18 +16,23 @@ class PermBit
         $bitPosition = 0;
 
         foreach ($actions as $category => $categoryActions) {
-            foreach ($categoryActions as $slug => $name) {
+            foreach ($categoryActions as $slug => $definition) {
                 $fullSlug = is_string($slug) ? "{$category}.{$slug}" : $category;
+                $name = is_array($definition) ? ($definition['name'] ?? (is_string($slug) ? $slug : (string) $definition)) : $definition;
+                $description = is_array($definition) ? ($definition['description'] ?? null) : null;
+                $depends = is_array($definition) ? (array) ($definition['depends'] ?? []) : [];
                 $bitmask = gmp_init(1);
                 $bitmask = gmp_mul($bitmask, gmp_pow(2, $bitPosition));
 
                 $result[$fullSlug] = [
                     'slug' => $fullSlug,
-                    'name' => is_string($name) ? $name : $slug,
+                    'name' => is_string($name) ? $name : (is_string($slug) ? $slug : (string) $name),
                     'category' => $category,
                     'bit_position' => $bitPosition,
                     'bitmask' => gmp_strval($bitmask),
                     'bitmask_hex' => gmp_strval($bitmask, 16),
+                    'description' => $description,
+                    'depends' => $depends,
                 ];
 
                 self::$cache[$fullSlug] = $bitPosition;

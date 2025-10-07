@@ -40,7 +40,7 @@ class SyncActionsCommand extends Command
             $isNew = !$action->exists;
 
             $action->name = $data['name'];
-            $action->description = "Category: {$data['category']} | Bit: {$data['bit_position']}";
+            $action->description = $data['description'] ?? "Category: {$data['category']} | Bit: {$data['bit_position']}";
             $action->bitmask = $data['bitmask'];
 
             $action->save();

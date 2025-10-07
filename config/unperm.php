@@ -47,7 +47,7 @@ return [
     | Можно переопределить через: UNPERM_SERVICE_AUTHORIZATION_ENABLED=true
     |
     */
-    'service_authorization_enabled' => env('UNPERM_SERVICE_AUTHORIZATION_ENABLED', false),
+    'service_authorization_enabled' => env('UNPERM_SERVICE_AUTHORIZATION_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -167,25 +167,90 @@ return [
 
     'actions' => [
         'users' => [
-            'view' => 'View users',
-            'create' => 'Create users',
-            'edit' => 'Edit users',
-            'delete' => 'Delete users',
+            'view' => [
+                'name' => 'View users',
+                'description' => 'Просмотр пользователей',
+            ],
+            'create' => [
+                'name' => 'Create users',
+                'description' => 'Создание пользователей',
+            ],
+            'edit' => [
+                'name' => 'Edit users',
+                'description' => 'Редактирование пользователей',
+                'depends' => ['users.view'],
+            ],
+            'delete' => [
+                'name' => 'Delete users',
+                'description' => 'Удаление пользователей',
+                'depends' => ['users.view'],
+            ],
         ],
         'posts' => [
-            'view' => 'View posts',
-            'create' => 'Create posts',
-            'edit' => 'Edit posts',
-            'delete' => 'Delete posts',
-            'publish' => 'Publish posts',
+            'view' => [
+                'name' => 'View posts',
+                'description' => 'Просмотр постов',
+            ],
+            'create' => [
+                'name' => 'Create posts',
+                'description' => 'Создание постов',
+            ],
+            'edit' => [
+                'name' => 'Edit posts',
+                'description' => 'Редактирование постов',
+                'depends' => ['posts.view'],
+            ],
+            'delete' => [
+                'name' => 'Delete posts',
+                'description' => 'Удаление постов',
+                'depends' => ['posts.view'],
+            ],
+            'publish' => [
+                'name' => 'Publish posts',
+                'description' => 'Публикация постов',
+                'depends' => ['posts.edit'],
+            ],
         ],
         'comments' => [
-            'view' => 'View comments',
-            'create' => 'Create comments',
-            'edit' => 'Edit comments',
-            'delete' => 'Delete comments',
-            'moderate' => 'Moderate comments',
+            'view' => [
+                'name' => 'View comments',
+                'description' => 'Просмотр комментариев',
+            ],
+            'create' => [
+                'name' => 'Create comments',
+                'description' => 'Создание комментариев',
+            ],
+            'edit' => [
+                'name' => 'Edit comments',
+                'description' => 'Редактирование комментариев',
+                'depends' => ['comments.view'],
+            ],
+            'delete' => [
+                'name' => 'Delete comments',
+                'description' => 'Удаление комментариев',
+                'depends' => ['comments.view'],
+            ],
+            'moderate' => [
+                'name' => 'Moderate comments',
+                'description' => 'Модерация комментариев',
+                'depends' => ['comments.view'],
+            ],
         ],
+    ],
+
+    // Зависимости ресурсов: дочерний ресурс может наследовать доступ от родителя
+    // Пример: passwords -> зависит от folders
+    'resource_dependencies' => [
+        // 'passwords' => [
+        //     'parent' => 'folders',           // ключ родительского ресурса
+        //     'via' => 'folder',               // связь/аксессор на модели пароля для получения родителя
+        //     'foreign_key' => 'folder_id',    // столбец в таблице паролей для фильтрации по родителю
+        //     'actions' => [                   // сопоставление действий: какое действие у родителя нужно
+        //         'view' => 'view',
+        //         'edit' => 'edit',
+        //         'delete' => 'delete',
+        //     ],
+        // ],
     ],
 
     'roles' => [

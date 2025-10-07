@@ -105,12 +105,14 @@ trait HasPermissions
             if (!$this->resourceActions()->where('resource_actions.id', $action->id)->exists()) {
                 $this->resourceActions()->attach($action->id);
                 $this->clearPermissionCache();
+                $this->unsetRelation('resourceActions');
             }
         } else {
             // Для обычного Action используем стандартную связь
             if (!$this->actions()->where('actions.id', $action->id)->exists()) {
                 $this->actions()->attach($action->id);
                 $this->clearPermissionCache();
+                $this->unsetRelation('actions');
             }
         }
 
@@ -140,6 +142,8 @@ trait HasPermissions
         }
 
         $this->clearPermissionCache();
+        $this->unsetRelation('actions');
+        $this->unsetRelation('resourceActions');
 
         return $this;
     }
@@ -165,6 +169,7 @@ trait HasPermissions
 
         $this->actions()->sync($actionIds);
         $this->clearPermissionCache();
+        $this->unsetRelation('actions');
 
         return $this;
     }
@@ -178,6 +183,7 @@ trait HasPermissions
         if (!$this->roles()->where('roles.id', $role->id)->exists()) {
             $this->roles()->attach($role->id);
             $this->clearPermissionCache();
+            $this->unsetRelation('roles');
         }
 
         return $this;
@@ -200,6 +206,7 @@ trait HasPermissions
 
         $this->roles()->detach($role->id);
         $this->clearPermissionCache();
+        $this->unsetRelation('roles');
 
         return $this;
     }
@@ -225,6 +232,7 @@ trait HasPermissions
 
         $this->roles()->sync($roleIds);
         $this->clearPermissionCache();
+        $this->unsetRelation('roles');
 
         return $this;
     }
@@ -238,6 +246,7 @@ trait HasPermissions
         if (!$this->groups()->where('groups.id', $group->id)->exists()) {
             $this->groups()->attach($group->id);
             $this->clearPermissionCache();
+            $this->unsetRelation('groups');
         }
 
         return $this;
@@ -260,6 +269,7 @@ trait HasPermissions
 
         $this->groups()->detach($group->id);
         $this->clearPermissionCache();
+        $this->unsetRelation('groups');
 
         return $this;
     }
@@ -285,6 +295,7 @@ trait HasPermissions
 
         $this->groups()->sync($groupIds);
         $this->clearPermissionCache();
+        $this->unsetRelation('groups');
 
         return $this;
     }
@@ -293,9 +304,7 @@ trait HasPermissions
     {
         $slug = $action instanceof Action ? $action->slug : $action;
 
-        $bitmask = $this->getPermissionBitmask();
-
-        return \DFiks\UnPerm\Support\PermBit::hasAction($bitmask, $slug);
+        return $this->hasActionWithDependencies($slug, []);
     }
 
     public function hasRole(Role|string $role): bool
@@ -318,24 +327,74 @@ trait HasPermissions
 
     public function hasAnyAction(array $actions): bool
     {
-        $slugs = array_map(function ($action) {
-            return $action instanceof Action ? $action->slug : $action;
-        }, $actions);
+        foreach ($actions as $action) {
+            $slug = $action instanceof Action ? $action->slug : $action;
+            if ($this->hasActionWithDependencies($slug, [])) {
+                return true;
+            }
+        }
 
-        $bitmask = $this->getPermissionBitmask();
-
-        return \DFiks\UnPerm\Support\PermBit::hasAnyAction($bitmask, $slugs);
+        return false;
     }
 
     public function hasAllActions(array $actions): bool
     {
-        $slugs = array_map(function ($action) {
-            return $action instanceof Action ? $action->slug : $action;
-        }, $actions);
+        foreach ($actions as $action) {
+            $slug = $action instanceof Action ? $action->slug : $action;
+            if (!$this->hasActionWithDependencies($slug, [])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function hasActionWithDependencies(string $slug, array $visited): bool
+    {
+        if (in_array($slug, $visited, true)) {
+            return true;
+        }
 
         $bitmask = $this->getPermissionBitmask();
 
-        return \DFiks\UnPerm\Support\PermBit::hasAllActions($bitmask, $slugs);
+        if (!\DFiks\UnPerm\Support\PermBit::hasAction($bitmask, $slug)) {
+            return false;
+        }
+
+        $visited[] = $slug;
+
+        $dependencies = $this->getConfiguredActionDependencies($slug);
+
+        foreach ($dependencies as $depSlug) {
+            if (!$this->hasActionWithDependencies($depSlug, $visited)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    protected function getConfiguredActionDependencies(string $slug): array
+    {
+        $parts = explode('.', $slug, 2);
+        if (count($parts) !== 2) {
+            return [];
+        }
+
+        [$category, $name] = $parts;
+        $config = config('unperm.actions', []);
+
+        if (!isset($config[$category][$name])) {
+            return [];
+        }
+
+        $definition = $config[$category][$name];
+
+        if (is_array($definition) && isset($definition['depends'])) {
+            return array_values(array_filter(array_map('strval', (array) $definition['depends'])));
+        }
+
+        return [];
     }
 
     public function hasAnyRole(array $roles): bool

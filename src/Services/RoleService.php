@@ -139,7 +139,7 @@ class RoleService
         $userModels = $modelDiscovery->findModelsWithPermissions();
 
         foreach ($userModels as $modelClass) {
-            $count += $modelClass::whereHas('roles', function ($q) use ($role) {
+            $count += $modelClass['class']::whereHas('roles', function ($q) use ($role) {
                 $q->where('roles.id', $role->id);
             })->count();
         }

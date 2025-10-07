@@ -90,6 +90,22 @@ trait HasResourcePermissions
             return true;
         }
 
+        // Проверяем зависимости ресурсов (родитель -> потомок)
+        $dependency = $this->getResourceDependencyConfig();
+        if ($dependency) {
+            $parentAction = $dependency['actions'][$action] ?? $action;
+            $via = $dependency['via'] ?? null;
+
+            if ($via && method_exists($this, $via)) {
+                $parent = $this->{$via};
+                if ($parent instanceof Model && method_exists($parent, 'userCan')) {
+                    if ($parent->userCan($user, $parentAction)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
 
@@ -213,13 +229,54 @@ trait HasResourcePermissions
             ->filter()
             ->toArray();
 
-        if (empty($userActions)) {
-            // Если нет точечных прав - возвращаем пустой результат
-            return $query->whereRaw('1 = 0');
+        // Добавляем записи, доступные через родительский ресурс
+        $dependency = $this->getResourceDependencyConfig();
+        $appliedParentFilter = false;
+        if ($dependency) {
+            $parentKey = $dependency['parent'] ?? null;
+            $via = $dependency['via'] ?? null;
+            $foreignKey = $dependency['foreign_key'] ?? null;
+            $parentAction = $dependency['actions'][$action] ?? $action;
+
+            if ($parentKey && $via && $foreignKey) {
+                $parentSlugs = $user->actions()
+                    ->where('slug', 'like', "{$parentKey}.{$parentAction}.%")
+                    ->pluck('slug');
+
+                if (method_exists($user, 'resourceActions')) {
+                    $parentResourceSlugs = $user->resourceActions()
+                        ->where('slug', 'like', "{$parentKey}.{$parentAction}.%")
+                        ->pluck('slug');
+                    $parentSlugs = $parentSlugs->merge($parentResourceSlugs);
+                }
+
+                $parentIds = $parentSlugs->map(function ($slug) use ($parentKey, $parentAction) {
+                    $prefix = "{$parentKey}.{$parentAction}.";
+                    if (str_starts_with($slug, $prefix)) {
+                        return substr($slug, strlen($prefix));
+                    }
+
+                    return null;
+                })->filter()->toArray();
+
+                if (!empty($parentIds)) {
+                    $query->orWhereIn($foreignKey, $parentIds);
+                    $appliedParentFilter = true;
+                }
+            }
         }
 
-        // Фильтруем по ID записей, на которые есть права
-        return $query->whereIn($this->getKeyName(), $userActions);
+        if (!empty($userActions)) {
+            $query->whereIn($this->getKeyName(), $userActions);
+            return $query;
+        }
+
+        if ($appliedParentFilter) {
+            return $query;
+        }
+
+        // Если нет ни прямых прав, ни прав через родителя — пустой результат
+        return $query->whereRaw('1 = 0');
     }
 
     /**
@@ -244,5 +301,16 @@ trait HasResourcePermissions
     public function scopeDeletableBy(Builder $query, Model $user): Builder
     {
         return $this->scopeWhereUserCan($query, $user, 'delete');
+    }
+
+    protected function getResourceDependencyConfig(): ?array
+    {
+        $key = $this->getResourcePermissionKey();
+        $deps = config('unperm.resource_dependencies', []);
+        if (isset($deps[$key]) && is_array($deps[$key])) {
+            return $deps[$key];
+        }
+
+        return null;
     }
 }
