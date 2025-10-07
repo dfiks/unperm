@@ -43,16 +43,6 @@ class ResourcePermissionsViewableTest extends TestCase
         // Проверяем что пользователь видит только свои папки через scope
         $viewableFolders = Folder::viewableBy($user)->get();
 
-        dump([
-            'user' => $user->name,
-            'total_folders' => Folder::count(),
-            'viewable_folders' => $viewableFolders->count(),
-            'viewable_ids' => $viewableFolders->pluck('id')->toArray(),
-            'expected_ids' => [$folder1->id, $folder2->id],
-            'resource_actions' => ResourceAction::select('id', 'slug', 'action_type')->get()->toArray(),
-            'user_resource_actions' => $user->resourceActions()->get(['id', 'slug'])->toArray(),
-        ]);
-
         $this->assertEquals(
             2,
             $viewableFolders->count(),
@@ -135,13 +125,6 @@ class ResourcePermissionsViewableTest extends TestCase
 
         // Проверяем что можем найти resource actions под глобальным action
         $resourceActions = ResourceAction::where('slug', 'like', $globalAction->slug . '.%')->get();
-
-        dump([
-            'global_action_slug' => $globalAction->slug,
-            'pattern' => $globalAction->slug . '.%',
-            'found_resource_actions' => $resourceActions->count(),
-            'slugs' => $resourceActions->pluck('slug')->toArray(),
-        ]);
 
         $this->assertEquals(
             2,
